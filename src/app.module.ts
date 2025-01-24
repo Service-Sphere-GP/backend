@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import databaseConfig from './config/database.config';
 import appConfig from './config/app.config';
+import { UserModule } from './users/user.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import appConfig from './config/app.config';
         uri: configService.get<string>('database.uri'),
       }),
     }),
+    UserModule,
   ],
   controllers: [AppController],
   providers: [AppService],
