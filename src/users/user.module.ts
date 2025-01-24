@@ -32,5 +32,6 @@ import { Customer, CustomerSchema } from './schemas/customer.schema';
   ],
   controllers: [],
   providers: [],
+  exports: [MongooseModule],
 })
 export class UserModule {}
