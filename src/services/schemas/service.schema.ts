@@ -26,6 +26,9 @@ export class Service {
 
   @Prop({ default: Date.now })
   creation_time: Date;
+
+  @Prop({ type: [String], default: [] })
+  images: string[];
 }
 
 export const ServiceSchema = SchemaFactory.createForClass(Service);
