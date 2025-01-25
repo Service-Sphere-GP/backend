@@ -40,6 +40,7 @@ describe('ServicesController', () => {
           description: 'All plumbing related services',
           category: 'Home Services',
           creation_time: new Date(),
+          images: ['https://example.com/image1.jpg'],
           service_provider_id: 'provider1',
         },
       ];

@@ -55,6 +55,7 @@ const generateService = (): Partial<Service> => {
     description: `Professional ${serviceType.toLowerCase()} services`,
     category: serviceType === 'Landscaping' ? 'Outdoor' : 'Home Services',
     creation_time: faker.date.past({ years: 1 }),
+    images: Array.from({ length: 3 }, () => faker.image.url()),
   };
 };
 
