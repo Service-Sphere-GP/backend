@@ -50,7 +50,7 @@ export class ServicesService {
   
       const newService = new this.serviceModel({
         ...serviceData,
-        service_provider_id: new Types.ObjectId(service_provider_id),
+        service_provider_id: service_provider_id,
         images: imageUrls.map(image => image.url),
       });
   

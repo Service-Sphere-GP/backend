@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ServicesController } from './services.controller';
 import { ServicesService } from './services.service';
 import { ServiceDto } from './dto/service.dto';
+import { Types } from 'mongoose';
 
 describe('ServicesController', () => {
   let controller: ServicesController;
@@ -41,7 +42,7 @@ describe('ServicesController', () => {
           category: 'Home Services',
           creation_time: new Date(),
           images: ['https://example.com/image1.jpg'],
-          service_provider_id: 'provider1',
+          service_provider_id: new Types.ObjectId('67976faae068d60c62500836'),
         },
       ];
 
