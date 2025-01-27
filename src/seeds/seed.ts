@@ -9,6 +9,7 @@ import { ServiceProvider } from '../users/schemas/service-provider.schema';
 import { Service } from '../services/schemas/service.schema';
 import { getModelToken } from '@nestjs/mongoose';
 import { faker } from '@faker-js/faker';
+import { Types } from 'mongoose';
 
 // Helper functions using your schema structure
 const generateAdmin = (): Partial<Admin> => ({
@@ -35,7 +36,7 @@ const generateServiceProvider = (): Partial<ServiceProvider> => ({
   business_name: faker.company.name(),
 });
 
-const generateService = (): Partial<Service> => {
+const generateService = (serviceProviderId: Types.ObjectId): Partial<Service> => {
   const serviceType = faker.helpers.arrayElement([
     'Plumbing',
     'Electrical',
@@ -56,6 +57,7 @@ const generateService = (): Partial<Service> => {
     category: serviceType === 'Landscaping' ? 'Outdoor' : 'Home Services',
     creation_time: faker.date.past({ years: 1 }),
     images: Array.from({ length: 3 }, () => faker.image.url()),
+    service_provider_id: serviceProviderId, // Reference to the service provider
   };
 };
 
@@ -67,6 +69,7 @@ async function bootstrap() {
   const adminModel = app.get<Model<Admin>>(getModelToken(Admin.name));
   const customerModel = app.get<Model<Customer>>(getModelToken(Customer.name));
   const serviceProviderModel = app.get<Model<ServiceProvider>>(getModelToken(ServiceProvider.name));
+  const serviceModel = app.get<Model<Service>>(getModelToken(Service.name));
 
   // Clear existing data
   await Promise.all([
@@ -74,10 +77,8 @@ async function bootstrap() {
     adminModel.deleteMany({}),
     customerModel.deleteMany({}),
     serviceProviderModel.deleteMany({}),
+    serviceModel.deleteMany({}),
   ]);
-
-  // Generate services first (if needed for relationships)
-  const services = Array.from({ length: 10 }, generateService);
 
   // Create admins (5 admins)
   await adminModel.create(
@@ -89,13 +90,24 @@ async function bootstrap() {
     Array.from({ length: 20 }, generateCustomer)
   );
 
-  // Create service providers with embedded services (15 providers)
-  await serviceProviderModel.create(
-    Array.from({ length: 15 }, () => ({
-      ...generateServiceProvider(),
-      services: Array.from({ length: 3 }, generateService), // 3 services per provider
-    }))
+  // Create service providers (15 providers)
+  const serviceProviders = await serviceProviderModel.create(
+    Array.from({ length: 15 }, generateServiceProvider)
   );
+
+  // Create services for each service provider
+  for (const provider of serviceProviders) {
+    // Generate services for the standalone `Service` collection
+    const services = Array.from({ length: 3 }, () => generateService(provider._id as Types.ObjectId));
+    const createdServices = await serviceModel.create(services);
+
+    // Embed the services in the `ServiceProvider` document
+    await serviceProviderModel.findByIdAndUpdate(
+      provider._id,
+      { $push: { services: { $each: createdServices } } }, // Embed the created services
+      { new: true }
+    );
+  }
 
   console.log('Database seeded with:');
   console.log('- 5 admins\n- 20 customers\n- 15 service providers\n- 45 services');

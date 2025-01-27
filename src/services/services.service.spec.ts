@@ -1,34 +1,54 @@
-// src/services/services.service.spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
-import { ServicesService } from './services.service';
 import { getModelToken } from '@nestjs/mongoose';
+import { CloudinaryService } from 'nestjs-cloudinary';
+import { ServicesService } from './services.service';
+import { Service } from './schemas/service.schema';
 import { ServiceProvider } from '../users/schemas/service-provider.schema';
-import { Model } from 'mongoose';
-import { ServiceDto } from './dto/service.dto';
-
-const mockServiceProvider = () => ({
-  find: jest.fn(),
-});
-
-type ServiceProviderModel = Model<ServiceProvider>;
+import { NotFoundException } from '@nestjs/common';
+import { UploadApiResponse } from 'cloudinary'; // Import the UploadApiResponse type
 
 describe('ServicesService', () => {
   let service: ServicesService;
-  let model: ServiceProviderModel;
+  let serviceModel: jest.MockedFunction<any>;
+  let serviceProviderModel: any;
+  let cloudinaryService: any;
 
   beforeEach(async () => {
+    // Mock the serviceModel as a constructor function
+    serviceModel = jest.fn();
+
+    // Mock methods on serviceProviderModel
+    serviceProviderModel = {
+      findById: jest.fn(),
+    };
+
+    // Mock methods on cloudinaryService
+    cloudinaryService = {
+      uploadFile: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ServicesService,
+        // Provide the mocked serviceModel
+        {
+          provide: getModelToken(Service.name),
+          useValue: serviceModel,
+        },
+        // Provide the mocked serviceProviderModel
         {
           provide: getModelToken(ServiceProvider.name),
-          useFactory: mockServiceProvider,
+          useValue: serviceProviderModel,
+        },
+        // Provide the mocked cloudinaryService
+        {
+          provide: CloudinaryService,
+          useValue: cloudinaryService,
         },
       ],
     }).compile();
 
     service = module.get<ServicesService>(ServicesService);
-    model = module.get<ServiceProviderModel>(getModelToken(ServiceProvider.name));
   });
 
   it('should be defined', () => {
@@ -36,52 +56,52 @@ describe('ServicesService', () => {
   });
 
   describe('getAllServices', () => {
-    it('should return an array of ServiceDto', async () => {
-      const mockServices = [
-        {
-          services: [
-            {
-              service_name: 'Plumbing',
-              service_attributes: { availability: '24/7' },
-              base_price: 100,
-              status: 'active',
-              description: 'All plumbing related services',
-              category: 'Home Services',
-              images: ['https://example.com/image1.jpg'],
-              creation_time: new Date(),
-            },
-          ],
-          _id: 'provider1',
-        },
-        {
-          services: [
-            {
-              service_name: 'Electrician',
-              service_attributes: { certification: 'Licensed' },
-              base_price: 120,
-              status: 'active',
-              description: 'Electrical maintenance and repairs',
-              category: 'Home Services',
-              images: ['https://example.com/image2.jpg'],
-              creation_time: new Date(),
-            },
-          ],
-          _id: 'provider2',
-        },
-      ];
-
-      (model.find as jest.Mock).mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          lean: jest.fn().mockReturnValue({
-            exec: jest.fn().mockResolvedValue(mockServices),
-          }),
-        }),
+    it('should return all services', async () => {
+      // Mock the return value of serviceModel.find()
+      const mockServices = [{ toObject: jest.fn().mockReturnValue({ service_name: 'Test' }) }];
+      serviceModel.find = jest.fn().mockReturnValue({
+        exec: jest.fn().mockResolvedValue(mockServices),
       });
 
-      const result: ServiceDto[] = await service.getAllServices();
-      expect(result).toHaveLength(2);
-      expect(result[0]).toHaveProperty('service_name', 'Plumbing');
-      expect(result[0]).toHaveProperty('serviceProviderId', 'provider1');
+      const result = await service.getAllServices();
+      expect(result).toEqual([{ service_name: 'Test' }]);
+    });
+  });
+
+  describe('createService', () => {
+    it('should create a service', async () => {
+      // Mock the service provider
+      const mockProvider = { services: [], save: jest.fn() };
+      serviceProviderModel.findById.mockResolvedValue(mockProvider);
+
+      // Mock the cloudinary uploadFile method with an UploadApiResponse
+      cloudinaryService.uploadFile.mockResolvedValue({ url: 'fakeUrl' } as UploadApiResponse);
+
+      // Mock the serviceModel constructor to return an instance with a save method
+      const mockServiceInstance = {
+        save: jest.fn().mockResolvedValue({
+          toObject: jest.fn().mockReturnValue({ service_name: 'Test Created' }),
+        }),
+      };
+      serviceModel.mockImplementation(() => mockServiceInstance);
+
+      const dto = { service_provider_id: '123', service_name: 'Test Created' } as any;
+      const files = [{ path: 'fakePath' }] as any;
+
+      const result = await service.createService(dto, files);
+
+      expect(result).toEqual({ service_name: 'Test Created' });
+      expect(mockProvider.save).toHaveBeenCalled();
+      expect(mockServiceInstance.save).toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException if provider not found', async () => {
+      // Mock findById to return null, simulating a not found provider
+      serviceProviderModel.findById.mockResolvedValue(null);
+
+      await expect(
+        service.createService({ service_provider_id: 'invalid' } as any, []),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });
