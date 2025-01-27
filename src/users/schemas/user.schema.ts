@@ -25,8 +25,11 @@ export class User extends Document {
   @Prop({ default: Date.now })
   updated_at: Date;
 
-  @Prop({ default: 'active' })
+  @Prop({ default: 'active', enum: ['active', 'suspended'] })
   status: string;
+
+  @Prop()
+  phone_number: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
