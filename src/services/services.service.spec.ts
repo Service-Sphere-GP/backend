@@ -104,4 +104,46 @@ describe('ServicesService', () => {
       ).rejects.toThrow(NotFoundException);
     });
   });
+
+  describe('deleteService', () => {
+    it('should delete a service successfully', async () => {
+      const mockService = {
+        _id: { toString: () => 'serviceId123' },
+        service_provider_id: 'providerId123',
+        deleteOne: jest.fn().mockResolvedValue({}),
+        toObject: jest.fn().mockReturnValue({ service_name: 'Deleted Service' }),
+      };
+      serviceModel.findById = jest.fn().mockResolvedValue(mockService);
+
+      const mockProvider = {
+        _id: 'providerId123',
+        services: [{ _id: { toString: () => 'serviceId123' } }],
+        save: jest.fn(),
+      };
+      serviceProviderModel.findById.mockResolvedValue(mockProvider);
+
+      const result = await service.deleteService('serviceId123');
+      expect(mockService.deleteOne).toHaveBeenCalled();
+      expect(mockProvider.services).toHaveLength(0);
+      expect(result).toEqual({ service_name: 'Deleted Service' });
+    });
+
+    it('should throw NotFoundException if service not found', async () => {
+      serviceModel.findById = jest.fn().mockResolvedValue(null);
+      await expect(service.deleteService('unknownId')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw NotFoundException if provider not found', async () => {
+      const mockService = {
+        _id: { toString: () => 'serviceId123' },
+        service_provider_id: 'invalidProviderId',
+        deleteOne: jest.fn(),
+        toObject: jest.fn().mockReturnValue({}),
+      };
+      serviceModel.findById = jest.fn().mockResolvedValue(mockService);
+      serviceProviderModel.findById.mockResolvedValue(null);
+
+      await expect(service.deleteService('serviceId123')).rejects.toThrow(NotFoundException);
+    });
+  });
 });
