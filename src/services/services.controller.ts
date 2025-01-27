@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseInterceptors, UploadedFiles } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseInterceptors, UploadedFiles, Param, Delete } from '@nestjs/common';
 import { ServicesService } from './services.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { ServiceDto } from './dto/service.dto';
@@ -6,7 +6,7 @@ import { CreateServiceDto } from './dto/create-service.dto'
 import { FilesInterceptor } from '@nestjs/platform-express';
 ;
 
-@ApiTags('services')
+@ApiTags('Services')
 @Controller('services')
 export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
@@ -52,4 +52,12 @@ export class ServicesController {
   ): Promise<ServiceDto> {
     return this.servicesService.createService(createServiceDto, files);
   }
+
+  @ApiOperation({ summary: 'Delete a service by Id' })
+  @ApiResponse({ status: 200, description: 'The service deleted will be returned' })
+  @Delete(':id')
+  async deleteService(@Param('id') id: string) {
+    return this.servicesService.deleteService(id);
+  }
+  
 }
