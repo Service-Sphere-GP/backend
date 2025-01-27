@@ -26,16 +26,8 @@ export class ServicesService {
    * @returns An array of ServiceDto objects with serviceProviderId.
    */
   async getAllServices(): Promise<ServiceDto[]> {
-    const serviceProviders = await this.serviceProviderModel.find().select('services').lean().exec();
-
-    const allServices: ServiceDto[] = serviceProviders.flatMap(provider => {
-      return (provider.services || []).map(service => ({
-        ...service,
-        service_provider_id: provider._id as Types.ObjectId,
-      }));
-    });
-
-    return allServices;
+    const services = await this.serviceModel.find().exec();
+    return services.map(service => service.toObject());
   }
 
     async createService(
