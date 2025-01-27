@@ -5,6 +5,12 @@ import { User } from './user.schema';
 export class Customer extends User {
   @Prop({ default: 0 })
   loyalty_points: number;
+
+  @Prop()
+  last_active_time: Date;
+
+  @Prop()
+  is_active: boolean;
 }
 
 export const CustomerSchema = SchemaFactory.createForClass(Customer);
