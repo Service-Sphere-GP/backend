@@ -2,6 +2,8 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 import { Document } from 'mongoose';
 
+import * as bcrypt from 'bcrypt';
+
 @Schema({ discriminatorKey: 'role' })
 export class User extends Document {
   @Prop({ required: true })
@@ -15,6 +17,9 @@ export class User extends Document {
 
   @Prop({ required: true })
   password: string;
+
+  @Prop({ })
+  confirm_password: string;
 
   @Prop()
   full_name: string;
@@ -34,7 +39,14 @@ export class User extends Document {
 
 export const UserSchema = SchemaFactory.createForClass(User);
 
-UserSchema.pre<User>('save', function (next) {
+UserSchema.pre<User>('save', async function (next) {
+  if (this.isModified('password')) {
+    if (this.password !== this.confirm_password) {
+      throw new Error('Passwords do not match');
+    }
+
+    this.password = await bcrypt.hash(this.password, 10);
+  }
   this.full_name = `${this.first_name} ${this.last_name}`;
   next();
 });
