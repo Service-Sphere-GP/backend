@@ -8,6 +8,7 @@ import appConfig from './config/app.config';
 import { UserModule } from './users/user.module';
 import { ServicesModule } from './services/services.module';
 import { CloudinaryModule } from 'nestjs-cloudinary';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { CloudinaryModule } from 'nestjs-cloudinary';
     }),
     UserModule,
     ServicesModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
