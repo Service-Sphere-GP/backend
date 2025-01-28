@@ -7,14 +7,20 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.setGlobalPrefix('api/v1', {
+    exclude: ['docs'], 
+  });
+  
   // Swagger configuration
   const config = new DocumentBuilder()
     .setTitle('Service Sphere API Documentation')
-    .setDescription('We hope that this API documentation will help you understand the Service Sphere API and not wonder why does life even matter.')
+    .setDescription(
+      'We hope that this API documentation will help you understand the Service Sphere API and not wonder why does life even matter.',
+    )
     .setVersion('1.0')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('docs', app, document);
 
   app.useGlobalPipes(new ValidationPipe());
 
