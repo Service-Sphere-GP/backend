@@ -58,7 +58,7 @@ describe('ServicesService', () => {
   describe('getAllServices', () => {
     it('should return all services', async () => {
       // Mock the return value of serviceModel.find()
-      const mockServices = [{ toObject: jest.fn().mockReturnValue({ service_name: 'Test' }) }];
+      const mockServices = [{ service_name: 'Test' }];
       serviceModel.find = jest.fn().mockReturnValue({
         exec: jest.fn().mockResolvedValue(mockServices),
       });
