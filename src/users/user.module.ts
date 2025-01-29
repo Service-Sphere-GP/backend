@@ -7,6 +7,7 @@ import {
   ServiceProviderSchema,
 } from './schemas/service-provider.schema';
 import { Customer, CustomerSchema } from './schemas/customer.schema';
+import { UsersService } from './users.service';
 
 @Module({
   imports: [
@@ -31,7 +32,7 @@ import { Customer, CustomerSchema } from './schemas/customer.schema';
     ]),
   ],
   controllers: [],
-  providers: [],
-  exports: [MongooseModule],
+  providers: [UsersService],
+  exports: [MongooseModule, UsersService],
 })
 export class UserModule {}
