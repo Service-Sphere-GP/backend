@@ -32,8 +32,13 @@ export class ServiceProvider extends User {
   })
   rating_average: number;
 
-  @Prop({ type: Object })
-  business_documents: Record<string, any>;
+
+  @Prop({ required: true })
+  business_address: string;
+
+  @Prop({ required: true })
+  tax_id: string;
+
 }
 
 export const ServiceProviderSchema =
