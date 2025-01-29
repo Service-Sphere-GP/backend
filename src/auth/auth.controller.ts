@@ -2,15 +2,10 @@ import {
   Controller,
   Post,
   Body,
-  ConflictException,
-  BadRequestException,
-  HttpStatus,
-  Res,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateCustomerDto } from './../users/dto/create-customer.dto';
-import { Response } from 'express';
-
+import { CreateServiceProviderDto } from './../users/dto/create-service-provider.dto';
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
@@ -18,6 +13,11 @@ export class AuthController {
   @Post('register/customer')
   async registerCustomer(@Body() createCustomerDto: CreateCustomerDto) {
     return this.authService.registerCustomer(createCustomerDto);
+  }
+
+  @Post('register/service-provider')
+  async registerServiceProvider(@Body() createServiceProviderDto: CreateServiceProviderDto) {
+    return this.authService.registerServiceProvider(createServiceProviderDto);
   }
 
 }
