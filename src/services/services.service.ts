@@ -24,15 +24,15 @@ export class ServicesService {
   /**
    * @returns An array of ServiceInterface objects with serviceProviderId.
    */
-  async getAllServices(): Promise<ServiceInterface[]> {
+  async getAllServices(): Promise<{ status: string; data: ServiceInterface[] }> {
     const services = await this.serviceModel.find().exec();
-    return services;
+    return { status: 'success', data: services };
   }
 
   async createService(
     createServiceDto: CreateServiceDto,
     files: Express.Multer.File[],
-  ): Promise<ServiceInterface> {
+  ): Promise<{ status: string; data: ServiceInterface }> {
     const imageUrls = await Promise.all(
       files.map((file) => this.cloudinary.uploadFile(file)),
     );
@@ -57,14 +57,14 @@ export class ServicesService {
     await serviceProvider.save();
 
     const savedServiceObject = savedService.toObject();
-    return savedServiceObject;
+    return { status: 'success', data: savedServiceObject };
   }
   /**
    * Deletes a service by ID.
    * @param serviceId The ID of the service to delete.
    * @returns The deleted service.
    */
-  async deleteService(serviceId: string): Promise<ServiceInterface> {
+  async deleteService(serviceId: string): Promise<{ status: string; data: ServiceInterface }> {
     const service = await this.serviceModel.findById(serviceId);
     if (!service) {
       throw new NotFoundException(`Service with ID ${serviceId} not found`);
@@ -91,6 +91,6 @@ export class ServicesService {
 
     await serviceProvider.save();
     const serviceObject = service.toObject();
-    return serviceObject;
+    return { status: 'success', data: serviceObject };
   }
 }

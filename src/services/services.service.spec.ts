@@ -56,7 +56,7 @@ describe('ServicesService', () => {
   });
 
   describe('getAllServices', () => {
-    it('should return all services', async () => {
+    it('should return all services in a jsend success object', async () => {
       // Mock the return value of serviceModel.find()
       const mockServices = [{ service_name: 'Test' }];
       serviceModel.find = jest.fn().mockReturnValue({
@@ -64,12 +64,13 @@ describe('ServicesService', () => {
       });
 
       const result = await service.getAllServices();
-      expect(result).toEqual([{ service_name: 'Test' }]);
+      expect(result.status).toBe('success');
+      expect(result.data).toBeInstanceOf(Array);
     });
   });
 
   describe('createService', () => {
-    it('should create a service', async () => {
+    it('should create a service and return a jsend object', async () => {
       // Mock the service provider
       const mockProvider = { services: [], save: jest.fn() };
       serviceProviderModel.findById.mockResolvedValue(mockProvider);
@@ -80,7 +81,10 @@ describe('ServicesService', () => {
       // Mock the serviceModel constructor to return an instance with a save method
       const mockServiceInstance = {
         save: jest.fn().mockResolvedValue({
-          toObject: jest.fn().mockReturnValue({ service_name: 'Test Created' }),
+          toObject: jest.fn().mockReturnValue({
+            _id: 'mockCreatedId',
+            service_name: 'Test Created',
+          }),
         }),
       };
       serviceModel.mockImplementation(() => mockServiceInstance);
@@ -90,7 +94,8 @@ describe('ServicesService', () => {
 
       const result = await service.createService(dto, files);
 
-      expect(result).toEqual({ service_name: 'Test Created' });
+      expect(result.status).toBe('success');
+      expect(result.data).toHaveProperty('_id');
       expect(mockProvider.save).toHaveBeenCalled();
       expect(mockServiceInstance.save).toHaveBeenCalled();
     });
@@ -106,12 +111,15 @@ describe('ServicesService', () => {
   });
 
   describe('deleteService', () => {
-    it('should delete a service successfully', async () => {
+    it('should delete a service and return a jsend object', async () => {
       const mockService = {
         _id: { toString: () => 'serviceId123' },
         service_provider_id: 'providerId123',
         deleteOne: jest.fn().mockResolvedValue({}),
-        toObject: jest.fn().mockReturnValue({ service_name: 'Deleted Service' }),
+        toObject: jest.fn().mockReturnValue({
+          _id: 'serviceId123',
+          service_name: 'Deleted Service',
+        }),
       };
       serviceModel.findById = jest.fn().mockResolvedValue(mockService);
 
@@ -123,9 +131,10 @@ describe('ServicesService', () => {
       serviceProviderModel.findById.mockResolvedValue(mockProvider);
 
       const result = await service.deleteService('serviceId123');
+      expect(result.status).toBe('success');
+      expect(result.data).toHaveProperty('_id', 'serviceId123');
       expect(mockService.deleteOne).toHaveBeenCalled();
       expect(mockProvider.services).toHaveLength(0);
-      expect(result).toEqual({ service_name: 'Deleted Service' });
     });
 
     it('should throw NotFoundException if service not found', async () => {

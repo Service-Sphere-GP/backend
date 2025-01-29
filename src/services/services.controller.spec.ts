@@ -48,10 +48,14 @@ describe('ServicesController', () => {
         },
       ];
 
-      jest.spyOn(service, 'getAllServices').mockResolvedValue(mockServices);
+      jest.spyOn(service, 'getAllServices').mockResolvedValue({
+        status: 'success',
+        data: mockServices,
+      });
 
       const result = await controller.getAllServices();
-      expect(result).toEqual(mockServices);
+      expect(result.status).toBe('success');
+      expect(result.data).toEqual(mockServices);
     });
   });
 
@@ -69,9 +73,13 @@ describe('ServicesController', () => {
         service_provider_id: new Types.ObjectId('67976faae068d60c62500837'),
       };
       const mockFiles = [];
-      jest.spyOn(service, 'createService').mockResolvedValue(mockServiceDto);
+      jest.spyOn(service, 'createService').mockResolvedValue({
+        status: 'success',
+        data: mockServiceDto,
+      });
       const result = await controller.createService({} as any, mockFiles);
-      expect(result).toEqual(mockServiceDto);
+      expect(result.status).toBe('success');
+      expect(result.data).toEqual(mockServiceDto);
     });
   });
 
@@ -88,9 +96,13 @@ describe('ServicesController', () => {
         images: ['http://example.com/image3.png'],
         service_provider_id: new Types.ObjectId('67976faae068d60c62500838'),
       };
-      jest.spyOn(service, 'deleteService').mockResolvedValue(mockDeletedService);
+      jest.spyOn(service, 'deleteService').mockResolvedValue({
+        status: 'success',
+        data: mockDeletedService,
+      });
       const result = await controller.deleteService('fake-id');
-      expect(result).toEqual(mockDeletedService);
+      expect(result.status).toBe('success');
+      expect(result.data).toEqual(mockDeletedService);
     });
   });
 });
