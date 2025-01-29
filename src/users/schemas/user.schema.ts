@@ -18,7 +18,7 @@ export class User extends Document {
   @Prop({ required: true })
   password: string;
 
-  @Prop({ })
+  @Prop({ required: true })
   confirm_password: string;
 
   @Prop()
@@ -46,6 +46,7 @@ UserSchema.pre<User>('save', async function (next) {
     }
 
     this.password = await bcrypt.hash(this.password, 10);
+    this.confirm_password = undefined;
   }
   this.full_name = `${this.first_name} ${this.last_name}`;
   next();
