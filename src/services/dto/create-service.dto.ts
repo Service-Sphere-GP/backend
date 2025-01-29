@@ -1,5 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsArray, IsOptional } from 'class-validator';
+import { Transform } from 'class-transformer';
+import {
+  IsString,
+  IsNumber,
+  IsArray,
+  IsOptional,
+  isObject,
+  IsObject,
+} from 'class-validator';
 import { Types } from 'mongoose';
 
 export class CreateServiceDto {
@@ -8,6 +16,10 @@ export class CreateServiceDto {
   service_name: string;
 
   @ApiProperty({ type: Object, example: { availability: '24/7' } })
+  @Transform(({ value }) => {
+    return JSON.parse(value);
+  })
+  @IsObject()
   service_attributes: Record<string, string>;
 
   @ApiProperty({ example: 100 })
@@ -28,7 +40,17 @@ export class CreateServiceDto {
   @IsString()
   category?: string;
 
+  @ApiProperty({
+    type: 'string',
+    format: 'binary',
+    isArray: true,
+    description: 'Array of image files to be uploaded',
+  })
+  @IsOptional()
+  @IsArray()
+  images?: Express.Multer.File[];
 
-  @ApiProperty({ example: "ObjectId('6794d963db9ce9d9caa11260')" })
-  service_provider_id: Types.ObjectId;
+  @ApiProperty({ example: '6794d963db9ce9d9caa11260' })
+  @IsString()
+  service_provider_id: string;
 }

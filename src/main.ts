@@ -3,14 +3,13 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 
-
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.setGlobalPrefix('api/v1', {
-    exclude: ['docs'], 
+    exclude: ['docs'],
   });
-  
+
   // Swagger configuration
   const config = new DocumentBuilder()
     .setTitle('Service Sphere API Documentation')
@@ -21,8 +20,17 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
-
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true, // Automatically transform payloads to DTO instances
+      whitelist: true, // Strip properties that do not have any decorators
+      forbidNonWhitelisted: true, // Throw an error if non-whitelisted properties are present
+      transformOptions: {
+        enableImplicitConversion: true, // Enable implicit type conversion
+      },
+      validationError: { target: false },
+    }),
+  );
 
   await app.listen(3000);
 }
