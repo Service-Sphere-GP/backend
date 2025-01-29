@@ -25,7 +25,7 @@ export class AuthService {
     };
 
     try {
-      const customer = await this.usersService.createUser(customerData);
+      const customer = await this.usersService.createCustomer(customerData);
       return {
         status: 'success',
         data: customer,
