@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Types } from 'mongoose';
+import { Express } from 'express';
 
 export class ServiceDto {
   @ApiProperty({ example: 'Plumbing' })
@@ -24,9 +25,9 @@ export class ServiceDto {
   creation_time: Date;
 
   @ApiProperty({
-    type: [String],
-    example: ['https://example.com/image1.jpg', 'https://example.com/image2.jpg'],
-    description: 'Array of image URLs associated with the service',
+    type: 'string',
+    isArray: true,
+    description: 'Array of image file URLs',
   })
   images: string[];
 

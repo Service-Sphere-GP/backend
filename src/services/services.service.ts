@@ -1,10 +1,10 @@
 // src/services/services.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { ServiceProvider } from '../users/schemas/service-provider.schema';
 import { Service } from './schemas/service.schema';
-import { ServiceDto } from './dto/service.dto';
+import { ServiceInterface } from './interfaces/service.interface';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { CloudinaryService } from 'nestjs-cloudinary';
 import { Express } from 'express';
@@ -22,22 +22,20 @@ export class ServicesService {
   ) {}
 
   /**
-   * Retrieve all embedded services from all service providers, including the service provider's ID.
-   * @returns An array of ServiceDto objects with serviceProviderId.
+   * @returns An array of ServiceInterface objects with serviceProviderId.
    */
-  async getAllServices(): Promise<ServiceDto[]> {
+  async getAllServices(): Promise<{ status: string; data: ServiceInterface[] }> {
     const services = await this.serviceModel.find().exec();
-    return services.map((service) => service.toObject());
+    return { status: 'success', data: services };
   }
 
   async createService(
     createServiceDto: CreateServiceDto,
     files: Express.Multer.File[],
-  ): Promise<ServiceDto> {
+  ): Promise<{ status: string; data: ServiceInterface }> {
     const imageUrls = await Promise.all(
       files.map((file) => this.cloudinary.uploadFile(file)),
     );
-
     const { service_provider_id, ...serviceData } = createServiceDto;
     const serviceProvider =
       await this.serviceProviderModel.findById(service_provider_id);
@@ -58,14 +56,15 @@ export class ServicesService {
     serviceProvider.services.push(savedService);
     await serviceProvider.save();
 
-    return savedService.toObject();
+    const savedServiceObject = savedService.toObject();
+    return { status: 'success', data: savedServiceObject };
   }
   /**
    * Deletes a service by ID.
    * @param serviceId The ID of the service to delete.
    * @returns The deleted service.
    */
-  async deleteService(serviceId: string): Promise<ServiceDto> {
+  async deleteService(serviceId: string): Promise<{ status: string; data: ServiceInterface }> {
     const service = await this.serviceModel.findById(serviceId);
     if (!service) {
       throw new NotFoundException(`Service with ID ${serviceId} not found`);
@@ -86,13 +85,12 @@ export class ServicesService {
       );
     }
 
-    serviceProvider.services = serviceProvider.services.filter(
-      (service) => {
-        return service._id.toString() !== serviceId;
-      }
-    );
+    serviceProvider.services = serviceProvider.services.filter((service) => {
+      return service._id.toString() !== serviceId;
+    });
 
     await serviceProvider.save();
-    return service.toObject();
+    const serviceObject = service.toObject();
+    return { status: 'success', data: serviceObject };
   }
 }
