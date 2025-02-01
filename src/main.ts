@@ -23,6 +23,17 @@ async function bootstrap() {
       'We hope that this API documentation will help you understand the Service Sphere API and not wonder why does life even matter.',
     )
     .setVersion('1.0')
+    .addBearerAuth(
+      { 
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'Authorization',
+        description: 'Enter JWT token',
+        in: 'header'
+      },
+      'access-token'
+    )
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
