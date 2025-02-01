@@ -8,6 +8,7 @@ import { ServiceInterface } from './interfaces/service.interface';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { CloudinaryService } from 'nestjs-cloudinary';
 import { Express } from 'express';
+import { UpdateServiceDto } from './dto/update-service.dto';
 
 @Injectable()
 export class ServicesService {
@@ -24,7 +25,10 @@ export class ServicesService {
   /**
    * @returns An array of ServiceInterface objects with serviceProviderId.
    */
-  async getAllServices(): Promise<{ status: string; data: ServiceInterface[] }> {
+  async getAllServices(): Promise<{
+    status: string;
+    data: ServiceInterface[];
+  }> {
     const services = await this.serviceModel.find().exec();
     return { status: 'success', data: services };
   }
@@ -64,7 +68,9 @@ export class ServicesService {
    * @param serviceId The ID of the service to delete.
    * @returns The deleted service.
    */
-  async deleteService(serviceId: string): Promise<{ status: string; data: ServiceInterface }> {
+  async deleteService(
+    serviceId: string,
+  ): Promise<{ status: string; data: ServiceInterface }> {
     const service = await this.serviceModel.findById(serviceId);
     if (!service) {
       throw new NotFoundException(`Service with ID ${serviceId} not found`);
@@ -90,6 +96,69 @@ export class ServicesService {
     });
 
     await serviceProvider.save();
+    const serviceObject = service.toObject();
+    return { status: 'success', data: serviceObject };
+  }
+
+  /**
+   * Updates a service by ID.
+   * @param serviceId The ID of the service to update.
+   * @param updateServiceDto The updated service data.
+   * @returns The updated service.
+   */
+  async updateService(
+    serviceId: string,
+    updateServiceDto: UpdateServiceDto,
+    files: Express.Multer.File[],
+  ): Promise<{ status: string; data: ServiceInterface }> {
+    const service = await this.serviceModel.findById(serviceId);
+    if (!service) {
+      throw new NotFoundException(`Service with ID ${serviceId} not found`);
+    }
+
+    let imageUrls: { url: string }[] = [];
+    if (files && files.length > 0) {
+      const uploadResults = await Promise.all(
+        files.map((file) => this.cloudinary.uploadFile(file)),
+      );
+      imageUrls = uploadResults
+        .map((result) => ({ url: result.url }));
+    }
+
+    const { images, ...restUpdateServiceDto } = updateServiceDto;
+    const updateData: Partial<Service> = {
+      ...restUpdateServiceDto,
+      service_provider_id: service.service_provider_id,
+    };
+
+    if (imageUrls.length > 0) {
+      updateData.images = imageUrls.map((image) => image.url);
+    }
+
+    service.set(updateData);
+    await service.save();
+
+    // update that service in the services array of its service provider
+    const serviceProvider = await this.serviceProviderModel.findById(
+      service.service_provider_id,
+    );
+
+    // throw an error if the service provider is not found
+    if (!serviceProvider) {
+      throw new NotFoundException(
+        `Service Provider with ID ${service.service_provider_id} not found
+      `,
+      );
+    }
+
+    const serviceIndex = serviceProvider.services.findIndex(
+      (s) => s._id.toString() === serviceId,
+    );
+
+    serviceProvider.services[serviceIndex] = service;
+
+    await serviceProvider.save();
+
     const serviceObject = service.toObject();
     return { status: 'success', data: serviceObject };
   }
