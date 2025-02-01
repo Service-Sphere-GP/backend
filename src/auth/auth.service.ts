@@ -1,15 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable,UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from './../users/users.service';
 import { CreateCustomerDto } from './../users/dto/create-customer.dto';
 import { CreateServiceProviderDto } from './../users/dto/create-service-provider.dto';
+import { RefreshTokensService } from './refresh-token.service';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
+
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private refreshTokenService: RefreshTokensService,
   ) {}
 
   async registerCustomer(createCustomerDto: CreateCustomerDto) {
@@ -96,9 +100,65 @@ export class AuthService {
     return userData;
   }
 
-  async generateToken(user: any): Promise<string> {
-    const payload = { email: user._doc.email, role: user._doc.role };
-    return this.jwtService.sign(payload);
+  async generateTokens(user: any) {
+    const accessPayload: JwtPayload = {
+      sub: user._id,
+      email: user.email,
+      role: user.role,
+      type: 'access',
+    };
+
+    const refreshPayload: JwtPayload = {
+      sub: user._id,
+      email: user.email,
+      role: user.role,
+      type: 'refresh',
+    };
+
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.sign(accessPayload, {
+        expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME,
+        secret: process.env.JWT_SECRET,
+      }),
+      this.jwtService.sign(refreshPayload, {
+        expiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME,
+        secret: process.env.JWT_REFRESH_SECRET,
+      }),
+    ]);
+    await this.refreshTokenService.storeRefreshToken(user._id, refreshToken);
+
+    return {
+      accessToken,
+      refreshToken,
+      user_id: user._id,
+      user_role: user.role,
+    };
+  }
+
+  async refreshToken(refreshToken: string) {
+    try {
+      const payload = this.jwtService.verify(refreshToken, {
+        secret: process.env.JWT_REFRESH_SECRET,
+      });
+
+      if (payload.type !== 'refresh') {
+        throw new UnauthorizedException('Invalid token type');
+      }
+
+      await this.refreshTokenService.validateRefreshToken(
+        payload.sub,
+        refreshToken,
+      );
+
+      const user = await this.usersService.findByEmail(payload.email);
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      return this.generateTokens(user);
+    } catch (error) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
   }
 
   async login(loginDto: any) {
@@ -111,12 +171,11 @@ export class AuthService {
         },
       };
     }
-
-    const token = await this.generateToken(user);
+    const tokens = await this.generateTokens(user._doc);
     return {
       status: 'success',
       data: {
-        token,
+        tokens,
         user: user._doc,
       },
     };
