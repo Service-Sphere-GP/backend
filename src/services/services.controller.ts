@@ -7,6 +7,7 @@ import {
   UploadedFiles,
   Param,
   Delete,
+  Patch,
 } from '@nestjs/common';
 import { ServicesService } from './services.service';
 import {
@@ -16,6 +17,7 @@ import {
   ApiConsumes,
 } from '@nestjs/swagger';
 import { ServiceDto } from './dto/service.dto';
+import { UpdateServiceDto } from './dto/update-service.dto';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { ServiceInterface } from './interfaces/service.interface';
 import { FilesInterceptor } from '@nestjs/platform-express';
@@ -60,5 +62,16 @@ export class ServicesController {
     @Param('id') id: string,
   ): Promise<{ status: string; data: ServiceInterface }> {
     return this.servicesService.deleteService(id);
+  }
+
+  @Patch(':id')
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FilesInterceptor('images'))
+  async updateService(
+    @Param('id') id: string,
+    @Body() updateServiceDto: UpdateServiceDto,
+    @UploadedFiles() files: Express.Multer.File[],
+  ): Promise<{ status: string; data: ServiceInterface }> {
+    return this.servicesService.updateService(id, updateServiceDto, files);
   }
 }
