@@ -7,6 +7,8 @@ import { AuthService } from './auth.service';
 import { CreateCustomerDto } from './../users/dto/create-customer.dto';
 import { CreateServiceProviderDto } from './../users/dto/create-service-provider.dto';
 import { LoginDto } from './dto/login.dto';
+import { RefreshDto } from './dto/refresh.dto';
+
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
@@ -26,5 +28,8 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
-
+  @Post('refresh')
+  async refresh(@Body() refreshDto: RefreshDto) {
+    return this.authService.refreshToken(refreshDto.refreshToken);
+  }
 }

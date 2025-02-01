@@ -7,22 +7,26 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RolesGuard } from './guards/roles.guard';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
+import { RefreshTokensService } from './refresh-token.service';
+import { RefreshToken, RefreshTokenSchema } from './schemas/refresh-token.schema';
 
 @Module({
   imports: [
     UserModule,
     PassportModule,
     ConfigModule,
+    MongooseModule.forFeature([{ name: RefreshToken.name, schema: RefreshTokenSchema }]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         secret: configService.get('JWT_SECRET'),
-        signOptions: { expiresIn: '1h' },
+        signOptions: { expiresIn: configService.get('JWT_EXPIRATION_TIME') },
       }),
     }),
   ],
-  providers: [AuthService, JwtStrategy, RolesGuard],
+  providers: [AuthService, JwtStrategy, RolesGuard, RefreshTokensService],
   controllers: [AuthController],
   exports: [AuthService],
 })

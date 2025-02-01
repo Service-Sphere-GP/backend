@@ -5,9 +5,12 @@ import { ValidationPipe } from '@nestjs/common';
 import { JsendExceptionFilter } from './common/filters/jsend-exception.filter';
 import { ConfigService } from '@nestjs/config';
 import * as morgan from 'morgan';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.use(cookieParser());
 
   app.setGlobalPrefix('api/v1', {
     exclude: ['docs'],
