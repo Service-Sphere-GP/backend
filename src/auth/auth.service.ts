@@ -1,4 +1,4 @@
-import { Injectable,UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from './../users/users.service';
@@ -6,7 +6,6 @@ import { CreateCustomerDto } from './../users/dto/create-customer.dto';
 import { CreateServiceProviderDto } from './../users/dto/create-service-provider.dto';
 import { RefreshTokensService } from './refresh-token.service';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
-
 
 @Injectable()
 export class AuthService {
@@ -179,5 +178,21 @@ export class AuthService {
         user: user._doc,
       },
     };
+  }
+
+  async logout(accessToken: string) {
+    try {
+      const payload = this.jwtService.verify(accessToken, {
+        secret: process.env.JWT_SECRET,
+        ignoreExpiration: true,
+      });
+      await this.refreshTokenService.invalidateRefreshTokens(payload.sub);
+      return {
+        status: 'success',
+        message: 'Successfully logged out',
+      };
+    } catch (error) {
+      throw new UnauthorizedException('Invalid token');
+    }
   }
 }
