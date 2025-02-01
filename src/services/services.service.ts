@@ -136,7 +136,8 @@ export class ServicesService {
     }
 
     service.set(updateData);
-    await service.save();
+    const savedService = await service.save();
+    const serviceObject = savedService.toObject();
 
     // update that service in the services array of its service provider
     const serviceProvider = await this.serviceProviderModel.findById(
@@ -159,7 +160,6 @@ export class ServicesService {
 
     await serviceProvider.save();
 
-    const serviceObject = service.toObject();
     return { status: 'success', data: serviceObject };
   }
 }

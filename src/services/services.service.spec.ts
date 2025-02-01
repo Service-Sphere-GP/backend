@@ -155,4 +155,39 @@ describe('ServicesService', () => {
       await expect(service.deleteService('serviceId123')).rejects.toThrow(NotFoundException);
     });
   });
+
+  describe('updateService', () => {
+    it('should update a service and return a jsend object', async () => {
+      const mockService = {
+        _id: 'serviceId123',
+        service_provider_id: 'providerId123',
+        set: jest.fn(),
+        save: jest.fn().mockResolvedValue({
+          toObject: jest.fn().mockReturnValue({ _id: 'serviceId123', status: 'updated' }),
+        }),
+      };
+      serviceModel.findById = jest.fn().mockResolvedValue(mockService);
+
+      const mockProvider = {
+        services: [{ _id: 'serviceId123' }],
+        save: jest.fn(),
+      };
+      serviceProviderModel.findById.mockResolvedValue(mockProvider);
+
+      const dto = { service_name: 'Updated Service' };
+      const files = [];
+
+      const result = await service.updateService('serviceId123', dto, files);
+      expect(result.status).toBe('success');
+      expect((result.data as any)._id).toBe('serviceId123');
+      expect(mockService.set).toHaveBeenCalled();
+      expect(mockService.save).toHaveBeenCalled();
+      expect(mockProvider.save).toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException if service is not found', async () => {
+      serviceModel.findById = jest.fn().mockResolvedValue(null);
+      await expect(service.updateService('unknownId', {}, [])).rejects.toThrow(NotFoundException);
+    });
+  });
 });

@@ -19,6 +19,7 @@ describe('ServicesController', () => {
             getAllServices: jest.fn(),
             createService: jest.fn(),
             deleteService: jest.fn(),
+            updateService: jest.fn(),
           },
         },
       ],
@@ -103,6 +104,32 @@ describe('ServicesController', () => {
       const result = await controller.deleteService('fake-id');
       expect(result.status).toBe('success');
       expect(result.data).toEqual(mockDeletedService);
+    });
+  });
+
+  describe('updateService', () => {
+    it('should update a service and return a jsend object', async () => {
+      const mockUpdatedService = {
+        _id: 'serviceId123',
+        service_name: 'New Name',
+        service_attributes: { availability: '24/7' },
+        base_price: 100,
+        status: 'active',
+        description: 'Updated service description',
+        category: 'Updated Category',
+        creation_time: new Date(),
+        images: ['http://example.com/updated_image.png'],
+        service_provider_id: new Types.ObjectId('67976faae068d60c62500839'),
+      };
+      jest.spyOn(service, 'updateService').mockResolvedValue({
+        status: 'success',
+        data: mockUpdatedService,
+      });
+
+      const result = await controller.updateService('serviceId123', {} as any, []);
+      expect(result.status).toBe('success');
+      expect(result.data).toEqual(mockUpdatedService);
+      expect(service.updateService).toHaveBeenCalled();
     });
   });
 });
