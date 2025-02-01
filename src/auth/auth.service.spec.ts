@@ -253,4 +253,53 @@ describe('AuthService', () => {
       expect(tokens).toHaveProperty('refreshToken');
     });
   });
+  describe('logout', () => {
+    const validAccessToken = 'valid_access_token';
+    const invalidAccessToken = 'invalid_access_token';
+    const userId = 'user123';
+  
+    beforeEach(() => {
+      refreshTokensService.invalidateRefreshTokens = jest.fn();
+  
+      (jwtService.verify as jest.Mock).mockImplementation((token, options) => {
+        if (token === validAccessToken) {
+          return { sub: userId };
+        }
+        throw new Error('Invalid token');
+      });
+    });
+  
+    it('should invalidate refresh tokens with valid access token', async () => {
+      const result = await authService.logout(validAccessToken);
+      
+      expect(jwtService.verify).toHaveBeenCalledWith(validAccessToken, {
+        secret: process.env.JWT_SECRET,
+        ignoreExpiration: true,
+      });
+      expect(refreshTokensService.invalidateRefreshTokens).toHaveBeenCalledWith(userId);
+      expect(result).toEqual({
+        status: 'success',
+        message: 'Successfully logged out'
+      });
+    });
+  
+    it('should throw UnauthorizedException for invalid token', async () => {
+      await expect(authService.logout(invalidAccessToken))
+        .rejects.toThrow(UnauthorizedException);
+    });
+  
+    it('should handle token verification failure', async () => {
+      (jwtService.verify as jest.Mock).mockImplementationOnce(() => {
+        throw new Error('Token expired');
+      });
+  
+      await expect(authService.logout(validAccessToken))
+        .rejects.toThrow(UnauthorizedException);
+    });
+  
+    it('should call invalidateRefreshTokens with correct user ID', async () => {
+      await authService.logout(validAccessToken);
+      expect(refreshTokensService.invalidateRefreshTokens).toHaveBeenCalledWith(userId);
+    });
+  });
 });

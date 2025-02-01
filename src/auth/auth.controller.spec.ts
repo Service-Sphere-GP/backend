@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { UnauthorizedException } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { CreateCustomerDto } from './../users/dto/create-customer.dto';
@@ -15,6 +16,7 @@ describe('AuthController', () => {
     registerServiceProvider: jest.fn(),
     login: jest.fn(),
     refreshToken: jest.fn(),
+    logout: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -56,7 +58,9 @@ describe('AuthController', () => {
 
       const result = await authController.registerCustomer(createCustomerDto);
       expect(result).toEqual(expectedResult);
-      expect(authService.registerCustomer).toHaveBeenCalledWith(createCustomerDto);
+      expect(authService.registerCustomer).toHaveBeenCalledWith(
+        createCustomerDto,
+      );
     });
   });
 
@@ -89,9 +93,13 @@ describe('AuthController', () => {
 
       mockAuthService.registerServiceProvider.mockResolvedValue(expectedResult);
 
-      const result = await authController.registerServiceProvider(createServiceProviderDto);
+      const result = await authController.registerServiceProvider(
+        createServiceProviderDto,
+      );
       expect(result).toEqual(expectedResult);
-      expect(authService.registerServiceProvider).toHaveBeenCalledWith(createServiceProviderDto);
+      expect(authService.registerServiceProvider).toHaveBeenCalledWith(
+        createServiceProviderDto,
+      );
     });
   });
 
@@ -105,7 +113,10 @@ describe('AuthController', () => {
       const expectedResult = {
         status: 'success',
         data: {
-          tokens: { accessToken: 'access_token', refreshToken: 'refresh_token' },
+          tokens: {
+            accessToken: 'access_token',
+            refreshToken: 'refresh_token',
+          },
           user: {
             _id: '789',
             email: 'login@example.com',
@@ -137,7 +148,56 @@ describe('AuthController', () => {
 
       const result = await authController.refresh(refreshDto);
       expect(result).toEqual(expectedResult);
-      expect(authService.refreshToken).toHaveBeenCalledWith(refreshDto.refreshToken);
+      expect(authService.refreshToken).toHaveBeenCalledWith(
+        refreshDto.refreshToken,
+      );
+    });
+  });
+
+  describe('logout', () => {
+    const validAuthorization = 'Bearer valid_token';
+    const invalidAuthorization = 'Invalid_token';
+    const emptyAuthorization = '';
+
+    const successResponse = {
+      status: 'success',
+      message: 'Successfully logged out',
+    };
+
+    beforeEach(() => {
+      mockAuthService.logout = jest.fn().mockResolvedValue(successResponse);
+    });
+
+    it('should successfully logout with valid authorization header', async () => {
+      const result = await authController.logout(validAuthorization);
+
+      expect(result).toEqual(successResponse);
+      expect(authService.logout).toHaveBeenCalledWith('valid_token');
+    });
+
+    it('should throw UnauthorizedException for missing Bearer prefix', async () => {
+      await expect(authController.logout(invalidAuthorization)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should throw UnauthorizedException for empty authorization header', async () => {
+      await expect(authController.logout(emptyAuthorization)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should propagate errors from auth service', async () => {
+      mockAuthService.logout.mockRejectedValueOnce(new UnauthorizedException());
+      await expect(authController.logout(validAuthorization)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should extract and pass correct token to service', async () => {
+      const testToken = 'test_token_123';
+      await authController.logout(`Bearer ${testToken}`);
+      expect(authService.logout).toHaveBeenCalledWith(testToken);
     });
   });
 });
