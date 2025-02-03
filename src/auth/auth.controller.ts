@@ -4,13 +4,22 @@ import {
   Body,
   UnauthorizedException,
   Headers,
+  BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { CreateCustomerDto } from './../users/dto/create-customer.dto';
 import { CreateServiceProviderDto } from './../users/dto/create-service-provider.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
+
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -64,5 +73,25 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Token refreshed successfully.' })
   async refresh(@Body() refreshDto: RefreshDto) {
     return this.authService.refreshToken(refreshDto.refreshToken);
+  }
+
+  @Post('forgot-password')
+  @ApiOperation({ summary: 'Generate password reset token' })
+  @ApiResponse({ status: 200, description: 'Reset token generated' })
+  async forgotPassword(@Body() { email }: ForgotPasswordDto) {
+    const token = await this.authService.generatePasswordResetToken(email);
+    return { status: 'success', token };
+  }
+
+  @Post('reset-password')
+  @ApiOperation({ summary: 'Reset password with token' })
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    if (resetPasswordDto.new_password !== resetPasswordDto.confirm_password) {
+      throw new BadRequestException('Passwords do not match');
+    }
+    return this.authService.resetPassword(
+      resetPasswordDto.token,
+      resetPasswordDto.new_password,
+    );
   }
 }
