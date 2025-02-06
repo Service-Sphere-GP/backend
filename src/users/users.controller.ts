@@ -11,8 +11,8 @@ export class UsersController {
     @Get('customers')
     @ApiOperation({ summary: 'Retrieve all customers' })
     @ApiResponse({ status: 200, description: 'List of customers' })
-    async getCustomers() {
-        return 'a list of all customers'
+    async getCustomers() : Promise<any> {
+        return this.usersService.findAllCustomers();
     }
 
     // the create customer endpoint is in the auth controller

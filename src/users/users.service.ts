@@ -10,6 +10,10 @@ import { User } from './schemas/user.schema';
 export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
+  async findAllCustomers(): Promise<User[] | null> {
+    return this.userModel.find({ role: 'customer' }).exec();
+  }
+
   async findByEmail(email: string): Promise<User | null> {
     return this.userModel.findOne({ email }).exec();
   }
