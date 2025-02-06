@@ -8,6 +8,7 @@ import {
 } from './schemas/service-provider.schema';
 import { Customer, CustomerSchema } from './schemas/customer.schema';
 import { UsersService } from './users.service';
+import {UsersController} from './users.controller'
 
 @Module({
   imports: [
@@ -31,7 +32,7 @@ import { UsersService } from './users.service';
       },
     ]),
   ],
-  controllers: [],
+  controllers: [UsersController],
   providers: [UsersService],
   exports: [MongooseModule, UsersService],
 })
