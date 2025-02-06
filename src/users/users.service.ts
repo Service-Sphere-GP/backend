@@ -46,4 +46,15 @@ export class UsersService {
       .findByIdAndUpdate(userId, { password: hashedPassword }, { new: true })
       .exec();
   }
+
+  async updateCustomer(id: string, updateData: Partial<User>) {
+    updateData.full_name = `${updateData.first_name} ${updateData.last_name}`;
+    return this.userModel
+      .findByIdAndUpdate(id, updateData, { new: true })
+      .exec();
+  }
+
+  async deleteCustomer(id: string) {
+    return this.userModel.findByIdAndDelete(id).exec();
+  }
 }
