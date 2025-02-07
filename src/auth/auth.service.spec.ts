@@ -75,11 +75,8 @@ describe('AuthService', () => {
         last_name: 'User',
         role: 'customer',
       });
-      const result = await authService.registerCustomer(createCustomerDto);
-      expect(result).toEqual({
-        status: 'fail',
-        data: { email: 'Email already exists' },
-      });
+      await expect(authService.registerCustomer(createCustomerDto))
+        .rejects.toThrow('Email already exists');
     });
 
     it('should create customer if email does not exist', async () => {
@@ -96,10 +93,7 @@ describe('AuthService', () => {
       );
 
       const result = await authService.registerCustomer(createCustomerDto);
-      expect(result).toEqual({
-        status: 'success',
-        data: fakeCustomer,
-      });
+      expect(result).toEqual(fakeCustomer);
     });
 
     it('should return error if create customer fails', async () => {
@@ -107,12 +101,8 @@ describe('AuthService', () => {
       (usersService.createCustomer as jest.Mock).mockRejectedValue(
         new Error('DB error'),
       );
-      const result = await authService.registerCustomer(createCustomerDto);
-      expect(result).toEqual({
-        status: 'error',
-        message: 'Failed to create customer',
-        code: 400,
-      });
+      await expect(authService.registerCustomer(createCustomerDto))
+        .rejects.toThrow('Failed to create customer');
     });
   });
 
@@ -136,13 +126,10 @@ describe('AuthService', () => {
         last_name: 'User',
         role: 'service_provider',
       });
-      const result = await authService.registerServiceProvider(
+      await expect(authService.registerServiceProvider(
         createServiceProviderDto,
-      );
-      expect(result).toEqual({
-        status: 'fail',
-        data: { email: 'Email already exists' },
-      });
+      ))
+        .rejects.toThrow('Email already exists');
     });
 
     it('should create service provider if email does not exist', async () => {
@@ -164,10 +151,7 @@ describe('AuthService', () => {
       const result = await authService.registerServiceProvider(
         createServiceProviderDto,
       );
-      expect(result).toEqual({
-        status: 'success',
-        data: fakeServiceProvider,
-      });
+      expect(result).toEqual(fakeServiceProvider);
     });
 
     it('should return error if create service provider fails', async () => {
@@ -175,14 +159,10 @@ describe('AuthService', () => {
       (usersService.createServiceProvider as jest.Mock).mockRejectedValue(
         new Error('DB error'),
       );
-      const result = await authService.registerServiceProvider(
+      await expect(authService.registerServiceProvider(
         createServiceProviderDto,
-      );
-      expect(result).toEqual({
-        status: 'error',
-        message: 'Failed to create service provider',
-        code: 400,
-      });
+      ))
+        .rejects.toThrow('Failed to create service provider');
     });
   });
 
@@ -228,12 +208,11 @@ describe('AuthService', () => {
         return `${payload.type}_token`;
       });
       const result = await authService.login(loginDto);
-      expect(result.status).toEqual('success');
-      expect(result.data).toHaveProperty('tokens');
-      expect(result.data.tokens).toHaveProperty('accessToken');
-      expect(result.data.tokens).toHaveProperty('refreshToken');
-      expect(result.data).toHaveProperty('user');
-      expect(result.data.user).toMatchObject(userData);
+      expect(result).toHaveProperty('tokens');
+      expect(result.tokens).toHaveProperty('accessToken');
+      expect(result.tokens).toHaveProperty('refreshToken');
+      expect(result).toHaveProperty('user');
+      expect(result.user).toMatchObject(userData);
     });
   });
 
@@ -316,10 +295,7 @@ describe('AuthService', () => {
       expect(refreshTokensService.invalidateRefreshTokens).toHaveBeenCalledWith(
         userId,
       );
-      expect(result).toEqual({
-        status: 'success',
-        message: 'Successfully logged out',
-      });
+      expect(result).toEqual('Successfully logged out');
     });
 
     it('should throw UnauthorizedException for invalid token', async () => {
@@ -379,6 +355,12 @@ describe('AuthService', () => {
   });
 
   describe('resetPassword', () => {
+    beforeAll(() => {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+    });
+    afterAll(() => {
+      (console.error as jest.Mock).mockRestore();
+    });
     const validToken = 'valid-token';
     const newPassword = 'newSecurePassword123';
     const user = {
@@ -448,10 +430,7 @@ describe('AuthService', () => {
       expect(passwordResetTokensService.deleteToken).toHaveBeenCalledWith(
         'token-id',
       );
-      expect(result).toEqual({
-        status: 'success',
-        message: 'Password updated successfully',
-      });
+      expect(result).toEqual('Password updated successfully');
     });
 
     it('should succeed even if token deletion fails', async () => {
@@ -465,8 +444,11 @@ describe('AuthService', () => {
 
       const result = await authService.resetPassword(validToken, newPassword);
 
-      expect(result.status).toBe('success');
-      expect(usersService.updatePassword).toHaveBeenCalled();
+      expect(usersService.updatePassword).toHaveBeenCalledWith(
+        '123',
+        newPassword,
+      );
+      expect(result).toEqual('Password updated successfully');
     });
   });
 });

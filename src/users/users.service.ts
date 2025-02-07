@@ -10,6 +10,10 @@ import { User } from './schemas/user.schema';
 export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
+  async findAllCustomers(): Promise<User[] | null> {
+    return this.userModel.find({ role: 'customer' }).exec();
+  }
+
   async findByEmail(email: string): Promise<User | null> {
     return this.userModel.findOne({ email }).exec();
   }
@@ -41,5 +45,16 @@ export class UsersService {
     return this.userModel
       .findByIdAndUpdate(userId, { password: hashedPassword }, { new: true })
       .exec();
+  }
+
+  async updateCustomer(id: string, updateData: Partial<User>) {
+    updateData.full_name = `${updateData.first_name} ${updateData.last_name}`;
+    return this.userModel
+      .findByIdAndUpdate(id, updateData, { new: true })
+      .exec();
+  }
+
+  async deleteCustomer(id: string) {
+    return this.userModel.findByIdAndDelete(id).exec();
   }
 }

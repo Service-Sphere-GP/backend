@@ -29,10 +29,7 @@ export class ServicesController {
   @Get()
   @ApiOperation({ summary: 'Retrieve all services' })
   @ApiResponse({ status: 200, description: 'List of services' })
-  async getAllServices(): Promise<{
-    status: string;
-    data: ServiceInterface[];
-  }> {
+  async getAllServices(): Promise<ServiceInterface[]> {
     return this.servicesService.getAllServices();
   }
 
@@ -48,7 +45,7 @@ export class ServicesController {
   async createService(
     @Body() createServiceDto: CreateServiceDto,
     @UploadedFiles() files: Express.Multer.File[],
-  ): Promise<{ status: string; data: ServiceInterface }> {
+  ): Promise<ServiceInterface> {
     return this.servicesService.createService(createServiceDto, files);
   }
 
@@ -60,7 +57,7 @@ export class ServicesController {
   @Delete(':id')
   async deleteService(
     @Param('id') id: string,
-  ): Promise<{ status: string; data: ServiceInterface }> {
+  ): Promise<ServiceInterface> {
     return this.servicesService.deleteService(id);
   }
 
@@ -71,7 +68,7 @@ export class ServicesController {
     @Param('id') id: string,
     @Body() updateServiceDto: UpdateServiceDto,
     @UploadedFiles() files: Express.Multer.File[],
-  ): Promise<{ status: string; data: ServiceInterface }> {
+  ): Promise<ServiceInterface> {
     return this.servicesService.updateService(id, updateServiceDto, files);
   }
 }

@@ -6,6 +6,7 @@ import { JsendExceptionFilter } from './common/filters/jsend-exception.filter';
 import { ConfigService } from '@nestjs/config';
 import * as morgan from 'morgan';
 import * as cookieParser from 'cookie-parser';
+import { JsendResponseInterceptor } from './common/interceptors/jsend-response.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -49,12 +50,11 @@ async function bootstrap() {
     }),
   );
 
-  // Use morgan for logging
   app.use(morgan('dev'));
 
   const configService = app.get(ConfigService);
   app.useGlobalFilters(new JsendExceptionFilter(configService));
-
+  app.useGlobalInterceptors(new JsendResponseInterceptor());
   await app.listen(3000);
 }
 bootstrap();

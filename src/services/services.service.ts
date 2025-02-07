@@ -25,18 +25,15 @@ export class ServicesService {
   /**
    * @returns An array of ServiceInterface objects with serviceProviderId.
    */
-  async getAllServices(): Promise<{
-    status: string;
-    data: ServiceInterface[];
-  }> {
+  async getAllServices(): Promise<ServiceInterface[]> {
     const services = await this.serviceModel.find().exec();
-    return { status: 'success', data: services };
+    return services;
   }
 
   async createService(
     createServiceDto: CreateServiceDto,
     files: Express.Multer.File[],
-  ): Promise<{ status: string; data: ServiceInterface }> {
+  ): Promise<ServiceInterface> {
     const imageUrls = await Promise.all(
       files.map((file) => this.cloudinary.uploadFile(file)),
     );
@@ -61,7 +58,7 @@ export class ServicesService {
     await serviceProvider.save();
 
     const savedServiceObject = savedService.toObject();
-    return { status: 'success', data: savedServiceObject };
+    return savedServiceObject;
   }
   /**
    * Deletes a service by ID.
@@ -70,7 +67,7 @@ export class ServicesService {
    */
   async deleteService(
     serviceId: string,
-  ): Promise<{ status: string; data: ServiceInterface }> {
+  ): Promise<ServiceInterface> {
     const service = await this.serviceModel.findById(serviceId);
     if (!service) {
       throw new NotFoundException(`Service with ID ${serviceId} not found`);
@@ -97,7 +94,7 @@ export class ServicesService {
 
     await serviceProvider.save();
     const serviceObject = service.toObject();
-    return { status: 'success', data: serviceObject };
+    return serviceObject;
   }
 
   /**
@@ -110,7 +107,7 @@ export class ServicesService {
     serviceId: string,
     updateServiceDto: UpdateServiceDto,
     files: Express.Multer.File[],
-  ): Promise<{ status: string; data: ServiceInterface }> {
+  ): Promise<ServiceInterface> {
     const service = await this.serviceModel.findById(serviceId);
     if (!service) {
       throw new NotFoundException(`Service with ID ${serviceId} not found`);
@@ -160,6 +157,6 @@ export class ServicesService {
 
     await serviceProvider.save();
 
-    return { status: 'success', data: serviceObject };
+    return serviceObject;
   }
 }

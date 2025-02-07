@@ -64,8 +64,7 @@ describe('ServicesService', () => {
       });
 
       const result = await service.getAllServices();
-      expect(result.status).toBe('success');
-      expect(result.data).toBeInstanceOf(Array);
+      expect(result).toBeInstanceOf(Array);
     });
   });
 
@@ -94,8 +93,7 @@ describe('ServicesService', () => {
 
       const result = await service.createService(dto, files);
 
-      expect(result.status).toBe('success');
-      expect(result.data).toHaveProperty('_id');
+      expect(result).toHaveProperty('_id');
       expect(mockProvider.save).toHaveBeenCalled();
       expect(mockServiceInstance.save).toHaveBeenCalled();
     });
@@ -131,8 +129,7 @@ describe('ServicesService', () => {
       serviceProviderModel.findById.mockResolvedValue(mockProvider);
 
       const result = await service.deleteService('serviceId123');
-      expect(result.status).toBe('success');
-      expect(result.data).toHaveProperty('_id', 'serviceId123');
+      expect(result).toHaveProperty('_id', 'serviceId123');
       expect(mockService.deleteOne).toHaveBeenCalled();
       expect(mockProvider.services).toHaveLength(0);
     });
@@ -178,8 +175,7 @@ describe('ServicesService', () => {
       const files = [];
 
       const result = await service.updateService('serviceId123', dto, files);
-      expect(result.status).toBe('success');
-      expect((result.data as any)._id).toBe('serviceId123');
+      expect((result as any)._id).toBe('serviceId123');
       expect(mockService.set).toHaveBeenCalled();
       expect(mockService.save).toHaveBeenCalled();
       expect(mockProvider.save).toHaveBeenCalled();

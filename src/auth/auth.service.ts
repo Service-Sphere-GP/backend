@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -28,31 +29,19 @@ export class AuthService {
       createCustomerDto.email,
     );
     if (existingUser) {
-      return {
-        status: 'fail',
-        data: {
-          email: 'Email already exists',
-        },
-      };
+      throw new BadRequestException('Email already exists');
     }
 
-    const customerData = {
-      ...createCustomerDto,
-      role: 'customer',
-    };
-
+    
     try {
+      const customerData = {
+        ...createCustomerDto,
+        role: 'customer',
+      }
       const customer = await this.usersService.createCustomer(customerData);
-      return {
-        status: 'success',
-        data: customer,
-      };
+      return customer;
     } catch (error) {
-      return {
-        status: 'error',
-        message: 'Failed to create customer',
-        code: 400,
-      };
+      throw new BadRequestException('Failed to create customer');
     }
   }
 
@@ -63,32 +52,18 @@ export class AuthService {
       createServiceProviderDto.email,
     );
     if (existingUser) {
-      return {
-        status: 'fail',
-        data: {
-          email: 'Email already exists',
-        },
-      };
+      throw new BadRequestException('Email already exists');
     }
 
-    const serviceProviderData = {
-      ...createServiceProviderDto,
-      role: 'service_provider',
-    };
-
     try {
-      const serviceProvider =
-        await this.usersService.createServiceProvider(serviceProviderData);
-      return {
-        status: 'success',
-        data: serviceProvider,
-      };
+      const serviceProviderData = {
+        ...createServiceProviderDto,
+        role: 'service_provider',
+      }
+      const serviceProvider = await this.usersService.createServiceProvider(serviceProviderData);
+      return serviceProvider;
     } catch (error) {
-      return {
-        status: 'error',
-        message: 'Failed to create service provider',
-        code: 400,
-      };
+      throw new BadRequestException('Failed to create service provider');
     }
   }
 
@@ -171,21 +146,10 @@ export class AuthService {
   async login(loginDto: any) {
     const user = await this.validateUser(loginDto.email, loginDto.password);
     if (!user) {
-      return {
-        status: 'fail',
-        data: {
-          message: 'Invalid email or password',
-        },
-      };
+      throw new UnauthorizedException('Invalid email or password');
     }
     const tokens = await this.generateTokens(user._doc);
-    return {
-      status: 'success',
-      data: {
-        tokens,
-        user: user._doc,
-      },
-    };
+    return { tokens, user: user._doc };
   }
 
   async logout(accessToken: string) {
@@ -195,10 +159,7 @@ export class AuthService {
         ignoreExpiration: true,
       });
       await this.refreshTokenService.invalidateRefreshTokens(payload.sub);
-      return {
-        status: 'success',
-        message: 'Successfully logged out',
-      };
+      return 'Successfully logged out';
     } catch (error) {
       throw new UnauthorizedException('Invalid token');
     }
@@ -255,6 +216,6 @@ export class AuthService {
       console.error('Token deletion error:', error);
     }
 
-    return { status: 'success', message: 'Password updated successfully' };
+    return 'Password updated successfully';
   }
 }
