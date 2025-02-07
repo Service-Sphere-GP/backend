@@ -1,14 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { Model } from 'mongoose';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { CreateServiceProviderDto } from './dto/create-service-provider.dto';
 import { User } from './schemas/user.schema';
+import { ServicesService } from '../services/services.service';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
+    private servicesService: ServicesService,
+  ) {}
 
   async findAllCustomers(): Promise<User[] | null> {
     return this.userModel.find({ role: 'customer' }).exec();
@@ -55,6 +59,30 @@ export class UsersService {
   }
 
   async deleteCustomer(id: string) {
+    return this.userModel.findByIdAndDelete(id).exec();
+  }
+
+  async findAllServiceProviders(): Promise<User[] | null> {
+    return this.userModel.find({ role: 'service_provider' }).exec();
+  }
+
+  async updateServiceProvider(id: string, updateData: Partial<User>) {
+    updateData.full_name = `${updateData.first_name} ${updateData.last_name}`;
+    return this.userModel
+      .findByIdAndUpdate(id, updateData, { new: true })
+      .exec();
+  }
+
+  async deleteServiceProvider(id: string) {
+    const serviceProvider: any = await this.userModel.findById(id).exec();
+    if (!serviceProvider) {
+      throw new NotFoundException(`Service provider with id ${id} not found`);
+    }
+
+    for (const service of serviceProvider.services) {
+      await this.servicesService.deleteService(service._id);
+    }
+
     return this.userModel.findByIdAndDelete(id).exec();
   }
 }
