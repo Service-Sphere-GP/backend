@@ -49,14 +49,12 @@ describe('ServicesController', () => {
         },
       ];
 
-      jest.spyOn(service, 'getAllServices').mockResolvedValue({
-        status: 'success',
-        data: mockServices,
-      });
+      jest.spyOn(service, 'getAllServices').mockResolvedValue(
+         mockServices
+      );
 
       const result = await controller.getAllServices();
-      expect(result.status).toBe('success');
-      expect(result.data).toEqual(mockServices);
+      expect(result).toEqual(mockServices);
     });
   });
 
@@ -74,13 +72,9 @@ describe('ServicesController', () => {
         service_provider_id: new Types.ObjectId('67976faae068d60c62500837'),
       };
       const mockFiles = [];
-      jest.spyOn(service, 'createService').mockResolvedValue({
-        status: 'success',
-        data: mockServiceDto,
-      });
+      jest.spyOn(service, 'createService').mockResolvedValue(mockServiceDto);
       const result = await controller.createService({} as any, mockFiles);
-      expect(result.status).toBe('success');
-      expect(result.data).toEqual(mockServiceDto);
+      expect(result).toEqual(mockServiceDto);
     });
   });
 
@@ -97,13 +91,9 @@ describe('ServicesController', () => {
         images: ['http://example.com/image3.png'],
         service_provider_id: new Types.ObjectId('67976faae068d60c62500838'),
       };
-      jest.spyOn(service, 'deleteService').mockResolvedValue({
-        status: 'success',
-        data: mockDeletedService,
-      });
+      jest.spyOn(service, 'deleteService').mockResolvedValue(mockDeletedService);
       const result = await controller.deleteService('fake-id');
-      expect(result.status).toBe('success');
-      expect(result.data).toEqual(mockDeletedService);
+      expect(result).toEqual(mockDeletedService);
     });
   });
 
@@ -121,14 +111,10 @@ describe('ServicesController', () => {
         images: ['http://example.com/updated_image.png'],
         service_provider_id: new Types.ObjectId('67976faae068d60c62500839'),
       };
-      jest.spyOn(service, 'updateService').mockResolvedValue({
-        status: 'success',
-        data: mockUpdatedService,
-      });
+      jest.spyOn(service, 'updateService').mockResolvedValue(mockUpdatedService);
 
       const result = await controller.updateService('serviceId123', {} as any, []);
-      expect(result.status).toBe('success');
-      expect(result.data).toEqual(mockUpdatedService);
+      expect(result).toEqual(mockUpdatedService);
       expect(service.updateService).toHaveBeenCalled();
     });
   });
