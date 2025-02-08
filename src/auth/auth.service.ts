@@ -9,7 +9,6 @@ import * as bcrypt from 'bcrypt';
 import { UsersService } from './../users/users.service';
 import { CreateCustomerDto } from './../users/dto/create-customer.dto';
 import { CreateServiceProviderDto } from './../users/dto/create-service-provider.dto';
-import { RefreshTokensService } from './refresh-token.service';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 import * as crypto from 'crypto';
@@ -20,7 +19,6 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-    private refreshTokenService: RefreshTokensService,
     private passwordResetTokenService: PasswordResetTokensService,
   ) {}
 
@@ -82,83 +80,38 @@ export class AuthService {
     return userData;
   }
 
-  async generateTokens(user: any) {
-    const accessPayload: JwtPayload = {
+  async generateToken(user: any) {
+    const payload: JwtPayload = {
       sub: user._id,
       email: user.email,
       role: user.role,
-      type: 'access',
     };
 
-    const refreshPayload: JwtPayload = {
-      sub: user._id,
-      email: user.email,
-      role: user.role,
-      type: 'refresh',
-    };
-
-    const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.sign(accessPayload, {
+    const token = await this.jwtService.sign(payload, {
         expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME,
         secret: process.env.JWT_SECRET,
-      }),
-      this.jwtService.sign(refreshPayload, {
-        expiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME,
-        secret: process.env.JWT_REFRESH_SECRET,
-      }),
-    ]);
-    await this.refreshTokenService.storeRefreshToken(user._id, refreshToken);
+      }
+    );
 
-    return {
-      accessToken,
-      refreshToken,
-      user_id: user._id,
-      user_role: user.role,
-    };
+    return token;
   }
 
-  async refreshToken(refreshToken: string) {
-    try {
-      const payload = this.jwtService.verify(refreshToken, {
-        secret: process.env.JWT_REFRESH_SECRET,
-      });
-
-      if (payload.type !== 'refresh') {
-        throw new UnauthorizedException('Invalid token type');
-      }
-
-      await this.refreshTokenService.validateRefreshToken(
-        payload.sub,
-        refreshToken,
-      );
-
-      const user = await this.usersService.findByEmail(payload.email);
-      if (!user) {
-        throw new UnauthorizedException('User not found');
-      }
-
-      return this.generateTokens(user);
-    } catch (error) {
-      throw new UnauthorizedException('Invalid refresh token');
-    }
-  }
 
   async login(loginDto: any) {
     const user = await this.validateUser(loginDto.email, loginDto.password);
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
     }
-    const tokens = await this.generateTokens(user._doc);
-    return { tokens, user: user._doc };
+    const token = await this.generateToken(user._doc);
+    return { token, user: user._doc };
   }
 
-  async logout(accessToken: string) {
+  async logout(token: string) {
     try {
-      const payload = this.jwtService.verify(accessToken, {
+      await this.jwtService.verify(token, {
         secret: process.env.JWT_SECRET,
         ignoreExpiration: true,
       });
-      await this.refreshTokenService.invalidateRefreshTokens(payload.sub);
       return 'Successfully logged out';
     } catch (error) {
       throw new UnauthorizedException('Invalid token');

@@ -5,7 +5,6 @@ import { AuthService } from './auth.service';
 import { CreateCustomerDto } from './../users/dto/create-customer.dto';
 import { CreateServiceProviderDto } from './../users/dto/create-service-provider.dto';
 import { LoginDto } from './dto/login.dto';
-import { RefreshDto } from './dto/refresh.dto';
 
 describe('AuthController', () => {
   let authController: AuthController;
@@ -132,25 +131,6 @@ describe('AuthController', () => {
       const result = await authController.login(loginDto);
       expect(result).toEqual(expectedResult);
       expect(authService.login).toHaveBeenCalledWith(loginDto);
-    });
-  });
-
-  describe('refresh', () => {
-    it('should call authService.refreshToken and return the result', async () => {
-      const refreshDto: RefreshDto = { refreshToken: 'some_refresh_token' };
-
-      const expectedResult = {
-        accessToken: 'newAccessToken',
-        refreshToken: 'newRefreshToken',
-      };
-
-      mockAuthService.refreshToken.mockResolvedValue(expectedResult);
-
-      const result = await authController.refresh(refreshDto);
-      expect(result).toEqual(expectedResult);
-      expect(authService.refreshToken).toHaveBeenCalledWith(
-        refreshDto.refreshToken,
-      );
     });
   });
 

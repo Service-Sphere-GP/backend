@@ -16,7 +16,6 @@ import { AuthService } from './auth.service';
 import { CreateCustomerDto } from './../users/dto/create-customer.dto';
 import { CreateServiceProviderDto } from './../users/dto/create-service-provider.dto';
 import { LoginDto } from './dto/login.dto';
-import { RefreshDto } from './dto/refresh.dto';
 
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -68,12 +67,6 @@ export class AuthController {
     return this.authService.logout(token);
   }
 
-  @Post('refresh')
-  @ApiOperation({ summary: 'Refresh JWT token' })
-  @ApiResponse({ status: 200, description: 'Token refreshed successfully.' })
-  async refresh(@Body() refreshDto: RefreshDto) {
-    return this.authService.refreshToken(refreshDto.refreshToken);
-  }
 
   @Post('forgot-password')
   @ApiOperation({ summary: 'Generate password reset token' })

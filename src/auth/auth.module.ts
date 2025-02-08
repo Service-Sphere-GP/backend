@@ -8,11 +8,6 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { RolesGuard } from './guards/roles.guard';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { RefreshTokensService } from './refresh-token.service';
-import {
-  RefreshToken,
-  RefreshTokenSchema,
-} from './schemas/refresh-token.schema';
 
 import {
   PasswordResetToken,
@@ -27,7 +22,6 @@ import { PasswordResetTokensService } from './password-reset-token.service';
     PassportModule,
     ConfigModule,
     MongooseModule.forFeature([
-      { name: RefreshToken.name, schema: RefreshTokenSchema },
       { name: PasswordResetToken.name, schema: PasswordResetTokenSchema },
     ]),
     JwtModule.registerAsync({
@@ -43,7 +37,6 @@ import { PasswordResetTokensService } from './password-reset-token.service';
     AuthService,
     JwtStrategy,
     RolesGuard,
-    RefreshTokensService,
     PasswordResetTokensService,
   ],
   controllers: [AuthController],

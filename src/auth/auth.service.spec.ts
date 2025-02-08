@@ -4,7 +4,6 @@ import * as crypto from 'crypto';
 import { AuthService } from './auth.service';
 import { UsersService } from './../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { RefreshTokensService } from './refresh-token.service';
 import { PasswordResetTokensService } from './password-reset-token.service';
 import { UnauthorizedException, NotFoundException } from '@nestjs/common';
 
@@ -12,7 +11,6 @@ describe('AuthService', () => {
   let authService: AuthService;
   let usersService: Partial<UsersService>;
   let jwtService: Partial<JwtService>;
-  let refreshTokensService: Partial<RefreshTokensService>;
   let passwordResetTokensService: Partial<PasswordResetTokensService>;
 
   beforeEach(async () => {
@@ -29,11 +27,6 @@ describe('AuthService', () => {
       verify: jest.fn(),
     };
 
-    refreshTokensService = {
-      storeRefreshToken: jest.fn(),
-      validateRefreshToken: jest.fn(),
-      invalidateRefreshTokens: jest.fn(),
-    };
 
     passwordResetTokensService = {
       deleteAllTokensForUser: jest.fn(),
@@ -47,7 +40,6 @@ describe('AuthService', () => {
         AuthService,
         { provide: UsersService, useValue: usersService },
         { provide: JwtService, useValue: jwtService },
-        { provide: RefreshTokensService, useValue: refreshTokensService },
         {
           provide: PasswordResetTokensService,
           useValue: passwordResetTokensService,
@@ -208,75 +200,18 @@ describe('AuthService', () => {
         return `${payload.type}_token`;
       });
       const result = await authService.login(loginDto);
-      expect(result).toHaveProperty('tokens');
-      expect(result.tokens).toHaveProperty('accessToken');
-      expect(result.tokens).toHaveProperty('refreshToken');
+      expect(result).toHaveProperty('token');
       expect(result).toHaveProperty('user');
       expect(result.user).toMatchObject(userData);
     });
   });
 
-  describe('refreshToken', () => {
-    const refreshTokenStr = 'refresh_token';
-    const fakePayload = {
-      sub: '1',
-      email: 'customer@example.com',
-      first_name: 'John',
-      last_name: 'Doe',
-      role: 'customer',
-      type: 'refresh',
-    };
-    const fakeUser = {
-      _doc: {
-        _id: '1',
-        email: 'customer@example.com',
-        first_name: 'John',
-        last_name: 'Doe',
-        role: 'customer',
-      },
-    };
-
-    beforeEach(() => {
-      (jwtService.verify as jest.Mock).mockReturnValue(fakePayload);
-      (usersService.findByEmail as jest.Mock).mockResolvedValue(fakeUser);
-      (jwtService.sign as jest.Mock).mockImplementation((payload, options) => {
-        return `${payload.type}_token`;
-      });
-    });
-
-    it('should throw UnauthorizedException if token type is invalid', async () => {
-      (jwtService.verify as jest.Mock).mockReturnValue({
-        ...fakePayload,
-        type: 'access',
-      });
-      await expect(authService.refreshToken(refreshTokenStr)).rejects.toThrow(
-        UnauthorizedException,
-      );
-    });
-
-    it('should throw UnauthorizedException if refresh token validation fails', async () => {
-      (
-        refreshTokensService.validateRefreshToken as jest.Mock
-      ).mockRejectedValue(new Error('invalid'));
-      await expect(authService.refreshToken(refreshTokenStr)).rejects.toThrow(
-        UnauthorizedException,
-      );
-    });
-
-    it('should return new tokens on valid refresh token', async () => {
-      const tokens = await authService.refreshToken(refreshTokenStr);
-      expect(tokens).toHaveProperty('accessToken');
-      expect(tokens).toHaveProperty('refreshToken');
-    });
-  });
   describe('logout', () => {
     const validAccessToken = 'valid_access_token';
     const invalidAccessToken = 'invalid_access_token';
     const userId = 'user123';
 
     beforeEach(() => {
-      refreshTokensService.invalidateRefreshTokens = jest.fn();
-
       (jwtService.verify as jest.Mock).mockImplementation((token, options) => {
         if (token === validAccessToken) {
           return { sub: userId };
@@ -285,16 +220,13 @@ describe('AuthService', () => {
       });
     });
 
-    it('should invalidate refresh tokens with valid access token', async () => {
+    it('should return success message with valid access token', async () => {
       const result = await authService.logout(validAccessToken);
 
       expect(jwtService.verify).toHaveBeenCalledWith(validAccessToken, {
         secret: process.env.JWT_SECRET,
         ignoreExpiration: true,
       });
-      expect(refreshTokensService.invalidateRefreshTokens).toHaveBeenCalledWith(
-        userId,
-      );
       expect(result).toEqual('Successfully logged out');
     });
 
@@ -311,13 +243,6 @@ describe('AuthService', () => {
 
       await expect(authService.logout(validAccessToken)).rejects.toThrow(
         UnauthorizedException,
-      );
-    });
-
-    it('should call invalidateRefreshTokens with correct user ID', async () => {
-      await authService.logout(validAccessToken);
-      expect(refreshTokensService.invalidateRefreshTokens).toHaveBeenCalledWith(
-        userId,
       );
     });
   });
