@@ -8,7 +8,8 @@ import {
   Param,
   Delete,
   Patch,
-  UseGuards
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import { ServicesService } from './services.service';
 import {
@@ -16,7 +17,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiConsumes,
-  ApiBearerAuth
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { ServiceDto } from './dto/service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
@@ -27,7 +28,6 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from './../auth/guards/jwt-auth.guard';
 import { Roles } from './../common/decorators/roles.decorators';
 import { RolesGuard } from './../auth/guards/roles.guard';
-
 
 @ApiTags('Services')
 @Controller('services')
@@ -52,12 +52,17 @@ export class ServicesController {
   })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin','service_provider')
+  @Roles('admin', 'service_provider')
   async createService(
     @Body() createServiceDto: CreateServiceDto,
     @UploadedFiles() files: Express.Multer.File[],
+    @Request() req: any, // add request to get user
   ): Promise<ServiceInterface> {
-    return this.servicesService.createService(createServiceDto, files);
+    return this.servicesService.createService(
+      createServiceDto,
+      files,
+      req.user.user_id,
+    );
   }
 
   @ApiOperation({ summary: 'Delete a service by Id' })
@@ -67,11 +72,9 @@ export class ServicesController {
   })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin','service_provider')
+  @Roles('admin', 'service_provider')
   @Delete(':id')
-  async deleteService(
-    @Param('id') id: string,
-  ): Promise<ServiceInterface> {
+  async deleteService(@Param('id') id: string): Promise<ServiceInterface> {
     return this.servicesService.deleteService(id);
   }
 
@@ -79,7 +82,7 @@ export class ServicesController {
   @ApiConsumes('multipart/form-data')
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin','service_provider')
+  @Roles('admin', 'service_provider')
   @UseInterceptors(FilesInterceptor('images'))
   async updateService(
     @Param('id') id: string,

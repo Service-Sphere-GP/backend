@@ -49,8 +49,4 @@ export class CreateServiceDto {
   @IsOptional()
   @IsArray()
   images?: Express.Multer.File[];
-
-  @ApiProperty({ example: '6794d963db9ce9d9caa11260' })
-  @IsString()
-  service_provider_id: string;
 }

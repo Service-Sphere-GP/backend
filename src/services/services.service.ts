@@ -33,22 +33,22 @@ export class ServicesService {
   async createService(
     createServiceDto: CreateServiceDto,
     files: Express.Multer.File[],
+    userId: string,
   ): Promise<ServiceInterface> {
     const imageUrls = await Promise.all(
       files.map((file) => this.cloudinary.uploadFile(file)),
     );
-    const { service_provider_id, ...serviceData } = createServiceDto;
-    const serviceProvider =
-      await this.serviceProviderModel.findById(service_provider_id);
+    const { ...serviceData } = createServiceDto;
+    const serviceProvider = await this.serviceProviderModel.findById(userId);
     if (!serviceProvider) {
       throw new NotFoundException(
-        `Service Provider with ID ${service_provider_id} not found`,
+        `Service Provider with ID ${userId} not found`,
       );
     }
 
     const newService = new this.serviceModel({
       ...serviceData,
-      service_provider_id: service_provider_id,
+      service_provider_id: userId,
       images: imageUrls.map((image) => image.url),
     });
 
@@ -65,9 +65,7 @@ export class ServicesService {
    * @param serviceId The ID of the service to delete.
    * @returns The deleted service.
    */
-  async deleteService(
-    serviceId: string,
-  ): Promise<ServiceInterface> {
+  async deleteService(serviceId: string): Promise<ServiceInterface> {
     const service = await this.serviceModel.findById(serviceId);
     if (!service) {
       throw new NotFoundException(`Service with ID ${serviceId} not found`);
@@ -118,8 +116,7 @@ export class ServicesService {
       const uploadResults = await Promise.all(
         files.map((file) => this.cloudinary.uploadFile(file)),
       );
-      imageUrls = uploadResults
-        .map((result) => ({ url: result.url }));
+      imageUrls = uploadResults.map((result) => ({ url: result.url }));
     }
 
     const { images, ...restUpdateServiceDto } = updateServiceDto;
