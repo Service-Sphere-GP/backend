@@ -8,6 +8,7 @@ import {
   Param,
   Delete,
   Patch,
+  UseGuards
 } from '@nestjs/common';
 import { ServicesService } from './services.service';
 import {
@@ -15,12 +16,19 @@ import {
   ApiOperation,
   ApiResponse,
   ApiConsumes,
+  ApiBearerAuth
 } from '@nestjs/swagger';
 import { ServiceDto } from './dto/service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { ServiceInterface } from './interfaces/service.interface';
 import { FilesInterceptor } from '@nestjs/platform-express';
+
+import { JwtAuthGuard } from './../auth/guards/jwt-auth.guard';
+import { Roles } from './../common/decorators/roles.decorators';
+import { RolesGuard } from './../auth/guards/roles.guard';
+
+
 @ApiTags('Services')
 @Controller('services')
 export class ServicesController {
@@ -42,6 +50,9 @@ export class ServicesController {
     description: 'The service has been successfully created.',
     type: ServiceDto,
   })
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin','service_provider')
   async createService(
     @Body() createServiceDto: CreateServiceDto,
     @UploadedFiles() files: Express.Multer.File[],
@@ -54,6 +65,9 @@ export class ServicesController {
     status: 200,
     description: 'The service deleted will be returned',
   })
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin','service_provider')
   @Delete(':id')
   async deleteService(
     @Param('id') id: string,
@@ -63,6 +77,9 @@ export class ServicesController {
 
   @Patch(':id')
   @ApiConsumes('multipart/form-data')
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin','service_provider')
   @UseInterceptors(FilesInterceptor('images'))
   async updateService(
     @Param('id') id: string,
