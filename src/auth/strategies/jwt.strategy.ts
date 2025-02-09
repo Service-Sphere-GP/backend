@@ -20,18 +20,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload) {
-    const user = await this.usersService.findByEmail(payload.sub);
-    console.log('user', user);
+    const user = await this.usersService.findById(payload.sub);
+    console.log(process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME);
     if (!user) {
-      throw new UnauthorizedException({
-        status: 'error',
-        message: 'Invalid token',
-        data: null,
-      });
+      throw new UnauthorizedException();
     }
     return {
-      id: user.id,
-      email: user.email
+      user_id: payload.sub,
+      email: payload.email,
+      role: payload.role,
     };
   }
 }
