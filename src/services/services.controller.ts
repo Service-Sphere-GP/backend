@@ -24,10 +24,10 @@ import { CreateServiceDto } from './dto/create-service.dto';
 import { ServiceInterface } from './interfaces/service.interface';
 import { FilesInterceptor } from '@nestjs/platform-express';
 
-import { JwtAuthGuard } from './../auth/guards/jwt-auth.guard';
+
 import { Roles } from './../common/decorators/roles.decorators';
 import { RolesGuard } from './../auth/guards/roles.guard';
-
+import { BlacklistedJwtAuthGuard } from 'src/auth/guards/blacklisted-jwt-auth.guard';
 
 @ApiTags('Services')
 @Controller('services')
@@ -37,6 +37,7 @@ export class ServicesController {
   @Get()
   @ApiOperation({ summary: 'Retrieve all services' })
   @ApiResponse({ status: 200, description: 'List of services' })
+  @UseGuards(BlacklistedJwtAuthGuard)
   async getAllServices(): Promise<ServiceInterface[]> {
     return this.servicesService.getAllServices();
   }
@@ -51,8 +52,8 @@ export class ServicesController {
     type: ServiceDto,
   })
   @ApiBearerAuth('access-token')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin','service_provider')
+  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @Roles('admin', 'service_provider')
   async createService(
     @Body() createServiceDto: CreateServiceDto,
     @UploadedFiles() files: Express.Multer.File[],
@@ -66,8 +67,8 @@ export class ServicesController {
     description: 'The service deleted will be returned',
   })
   @ApiBearerAuth('access-token')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin','service_provider')
+  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @Roles('admin', 'service_provider')
   @Delete(':id')
   async deleteService(
     @Param('id') id: string,
@@ -78,8 +79,8 @@ export class ServicesController {
   @Patch(':id')
   @ApiConsumes('multipart/form-data')
   @ApiBearerAuth('access-token')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin','service_provider')
+  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @Roles('admin', 'service_provider')
   @UseInterceptors(FilesInterceptor('images'))
   async updateService(
     @Param('id') id: string,
