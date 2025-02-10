@@ -5,6 +5,7 @@ import { AuthService } from './auth.service';
 import { UsersService } from './../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { PasswordResetTokensService } from './password-reset-token.service';
+import { TokenBlacklistService } from './token-blacklist.service';
 import { UnauthorizedException, NotFoundException } from '@nestjs/common';
 
 describe('AuthService', () => {
@@ -12,6 +13,7 @@ describe('AuthService', () => {
   let usersService: Partial<UsersService>;
   let jwtService: Partial<JwtService>;
   let passwordResetTokensService: Partial<PasswordResetTokensService>;
+  let tokenBlacklistService: Partial<TokenBlacklistService>;
 
   beforeEach(async () => {
     usersService = {
@@ -27,7 +29,6 @@ describe('AuthService', () => {
       verify: jest.fn(),
     };
 
-
     passwordResetTokensService = {
       deleteAllTokensForUser: jest.fn(),
       createToken: jest.fn(),
@@ -35,15 +36,19 @@ describe('AuthService', () => {
       deleteToken: jest.fn(),
     };
 
+    tokenBlacklistService = {
+      blacklistToken: jest.fn(),
+      isBlacklisted: jest.fn(),
+      removeExpiredTokens: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
         { provide: UsersService, useValue: usersService },
         { provide: JwtService, useValue: jwtService },
-        {
-          provide: PasswordResetTokensService,
-          useValue: passwordResetTokensService,
-        },
+        { provide: PasswordResetTokensService, useValue: passwordResetTokensService },
+        { provide: TokenBlacklistService, useValue: tokenBlacklistService },
       ],
     }).compile();
 
@@ -178,72 +183,55 @@ describe('AuthService', () => {
     };
 
     beforeEach(() => {
-      jest.spyOn(bcrypt, 'compare').mockImplementation((pass, hash) => {
-        return Promise.resolve(pass === 'password123' && hash === 'hashedPass');
-      });
+      jest.spyOn(bcrypt, 'compare').mockImplementation((pass, hash) => 
+        Promise.resolve(pass === 'password123' && hash === 'hashedPass')
+      );
+      (jwtService.sign as jest.Mock).mockReturnValue('jwt_token');
     });
 
-    afterEach(() => {
-      jest.clearAllMocks();
-    });
-
-    it('should return tokens and user data for valid credentials', async () => {
+    it('should return token and user data for valid credentials', async () => {
       (usersService.findByEmail as jest.Mock).mockResolvedValue(fakeUser);
-      const userData = {
-        _id: '1',
-        email: 'customer@example.com',
-        first_name: 'John',
-        last_name: 'Doe',
-        role: 'customer',
-      };
-      (jwtService.sign as jest.Mock).mockImplementation((payload, options) => {
-        return `${payload.type}_token`;
-      });
+      
       const result = await authService.login(loginDto);
-      expect(result).toHaveProperty('token');
-      expect(result).toHaveProperty('user');
-      expect(result.user).toMatchObject(userData);
+      
+      expect(result).toEqual({
+        token: 'jwt_token',
+        user: fakeUser._doc
+      });
+    });
+
+    it('should throw UnauthorizedException for invalid credentials', async () => {
+      (usersService.findByEmail as jest.Mock).mockResolvedValue(null);
+      
+      await expect(authService.login(loginDto))
+        .rejects.toThrow(UnauthorizedException);
     });
   });
 
   describe('logout', () => {
-    const validAccessToken = 'valid_access_token';
-    const invalidAccessToken = 'invalid_access_token';
-    const userId = 'user123';
-
+    const validToken = 'valid_token';
+    
     beforeEach(() => {
-      (jwtService.verify as jest.Mock).mockImplementation((token, options) => {
-        if (token === validAccessToken) {
-          return { sub: userId };
-        }
-        throw new Error('Invalid token');
+      (jwtService.verify as jest.Mock).mockReturnValue({ 
+        exp: Math.floor(Date.now() / 1000) + 3600 
       });
     });
 
-    it('should return success message with valid access token', async () => {
-      const result = await authService.logout(validAccessToken);
+    it('should blacklist token and return success message', async () => {
+      const result = await authService.logout(validToken);
 
-      expect(jwtService.verify).toHaveBeenCalledWith(validAccessToken, {
-        secret: process.env.JWT_SECRET,
-        ignoreExpiration: true,
-      });
-      expect(result).toEqual('Successfully logged out');
+      expect(tokenBlacklistService.blacklistToken).toHaveBeenCalled();
+      expect(tokenBlacklistService.removeExpiredTokens).toHaveBeenCalled();
+      expect(result).toBe('Successfully logged out');
     });
 
     it('should throw UnauthorizedException for invalid token', async () => {
-      await expect(authService.logout(invalidAccessToken)).rejects.toThrow(
-        UnauthorizedException,
-      );
-    });
-
-    it('should handle token verification failure', async () => {
-      (jwtService.verify as jest.Mock).mockImplementationOnce(() => {
-        throw new Error('Token expired');
+      (jwtService.verify as jest.Mock).mockImplementation(() => {
+        throw new Error('Invalid token');
       });
 
-      await expect(authService.logout(validAccessToken)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(authService.logout(validToken))
+        .rejects.toThrow(UnauthorizedException);
     });
   });
 
