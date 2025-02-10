@@ -46,19 +46,17 @@ export class ServicesService {
       );
     }
 
-    const newService = new this.serviceModel({
+    const newService = await this.serviceModel.create({
       ...serviceData,
       service_provider_id: userId,
       images: imageUrls.map((image) => image.url),
     });
 
     const savedService = await newService.save();
-
     serviceProvider.services.push(savedService);
     await serviceProvider.save();
 
-    const savedServiceObject = savedService.toObject();
-    return savedServiceObject;
+    return savedService.toObject();
   }
   /**
    * Deletes a service by ID.

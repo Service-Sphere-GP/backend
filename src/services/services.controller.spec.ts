@@ -1,13 +1,21 @@
-// src/services/services.controller.spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
 import { ServicesController } from './services.controller';
 import { ServicesService } from './services.service';
 import { ServiceDto } from './dto/service.dto';
 import { Types } from 'mongoose';
+import { BlacklistedJwtAuthGuard } from '../auth/guards/blacklisted-jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
 
 describe('ServicesController', () => {
   let controller: ServicesController;
   let service: ServicesService;
+
+  const mockService = {
+    getAllServices: jest.fn(),
+    createService: jest.fn(),
+    deleteService: jest.fn(),
+    updateService: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -15,107 +23,134 @@ describe('ServicesController', () => {
       providers: [
         {
           provide: ServicesService,
-          useValue: {
-            getAllServices: jest.fn(),
-            createService: jest.fn(),
-            deleteService: jest.fn(),
-            updateService: jest.fn(),
-          },
+          useValue: mockService,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(BlacklistedJwtAuthGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(RolesGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<ServicesController>(ServicesController);
     service = module.get<ServicesService>(ServicesService);
   });
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
   describe('getAllServices', () => {
-    it('should return an array of ServiceDto', async () => {
-      const mockServices: ServiceDto[] = [
+    it('should return an array of services', async () => {
+      const mockServices = [
         {
-          service_name: 'Plumbing',
-          service_attributes: { availability: '24/7' },
+          _id: new Types.ObjectId(),
+          service_name: 'Test Service',
+          description: 'Test Description',
           base_price: 100,
+          service_provider_id: new Types.ObjectId(),
+          images: ['image1.jpg'],
+          category: 'Test Category',
+          service_attributes: {},
           status: 'active',
-          description: 'All plumbing related services',
-          category: 'Home Services',
           creation_time: new Date(),
-          images: ['http://example.com/image1.png'],
-          service_provider_id: new Types.ObjectId('67976faae068d60c62500836'),
         },
       ];
 
-      jest.spyOn(service, 'getAllServices').mockResolvedValue(
-         mockServices
-      );
-
+      mockService.getAllServices.mockResolvedValue(mockServices);
       const result = await controller.getAllServices();
       expect(result).toEqual(mockServices);
+      expect(mockService.getAllServices).toHaveBeenCalled();
     });
   });
 
   describe('createService', () => {
+    const createServiceDto = {
+      service_name: 'New Service',
+      description: 'New Description',
+      base_price: 150,
+      category: 'New Category',
+      service_attributes: {},
+      status: 'active',
+    };
+
+    const mockFiles = [{ filename: 'test.jpg' }] as Express.Multer.File[];
+    const mockRequest = {
+      user: { user_id: new Types.ObjectId().toString() },
+    };
+
     it('should create a new service', async () => {
-      const mockServiceDto = {
-        service_name: 'Cleaning',
-        service_attributes: { availability: 'Weekdays' },
-        base_price: 50,
-        status: 'active',
-        description: 'All cleaning related services',
-        category: 'Home Services',
-        creation_time: new Date(),
-        images: ['http://example.com/image2.png'],
-        service_provider_id: new Types.ObjectId('67976faae068d60c62500837'),
+      const expectedService = {
+        ...createServiceDto,
+        _id: new Types.ObjectId(),
+        service_provider_id: mockRequest.user.user_id,
+        images: ['uploaded-image-url.jpg'],
       };
-      const mockFiles = [];
-      jest.spyOn(service, 'createService').mockResolvedValue(mockServiceDto);
-      const result = await controller.createService({} as any, mockFiles);
-      expect(result).toEqual(mockServiceDto);
+
+      mockService.createService.mockResolvedValue(expectedService);
+
+      const result = await controller.createService(
+        createServiceDto,
+        mockFiles,
+        mockRequest,
+      );
+
+      expect(result).toEqual(expectedService);
+      expect(mockService.createService).toHaveBeenCalledWith(
+        createServiceDto,
+        mockFiles,
+        mockRequest.user.user_id,
+      );
     });
   });
 
   describe('deleteService', () => {
-    it('should delete a service by Id', async () => {
-      const mockDeletedService = {
-        service_name: 'Gardening',
-        service_attributes: { availability: 'Weekends' },
-        base_price: 70,
-        status: 'inactive',
-        description: 'All gardening related services',
-        category: 'Home Services',
-        creation_time: new Date(),
-        images: ['http://example.com/image3.png'],
-        service_provider_id: new Types.ObjectId('67976faae068d60c62500838'),
+    const serviceId = new Types.ObjectId().toString();
+
+    it('should delete a service', async () => {
+      const deletedService = {
+        _id: serviceId,
+        service_name: 'Deleted Service',
       };
-      jest.spyOn(service, 'deleteService').mockResolvedValue(mockDeletedService);
-      const result = await controller.deleteService('fake-id');
-      expect(result).toEqual(mockDeletedService);
+
+      mockService.deleteService.mockResolvedValue(deletedService);
+
+      const result = await controller.deleteService(serviceId);
+      expect(result).toEqual(deletedService);
+      expect(mockService.deleteService).toHaveBeenCalledWith(serviceId);
     });
   });
 
   describe('updateService', () => {
-    it('should update a service and return a jsend object', async () => {
-      const mockUpdatedService = {
-        _id: 'serviceId123',
-        service_name: 'New Name',
-        service_attributes: { availability: '24/7' },
-        base_price: 100,
-        status: 'active',
-        description: 'Updated service description',
-        category: 'Updated Category',
-        creation_time: new Date(),
-        images: ['http://example.com/updated_image.png'],
-        service_provider_id: new Types.ObjectId('67976faae068d60c62500839'),
-      };
-      jest.spyOn(service, 'updateService').mockResolvedValue(mockUpdatedService);
+    const serviceId = new Types.ObjectId().toString();
+    const updateServiceDto = {
+      service_name: 'Updated Service',
+      description: 'Updated Description',
+    };
+    const mockFiles = [{ filename: 'updated.jpg' }] as Express.Multer.File[];
 
-      const result = await controller.updateService('serviceId123', {} as any, []);
-      expect(result).toEqual(mockUpdatedService);
-      expect(service.updateService).toHaveBeenCalled();
+    it('should update a service', async () => {
+      const updatedService = {
+        _id: serviceId,
+        ...updateServiceDto,
+        images: ['updated-image-url.jpg'],
+      };
+
+      mockService.updateService.mockResolvedValue(updatedService);
+
+      const result = await controller.updateService(
+        serviceId,
+        updateServiceDto,
+        mockFiles,
+      );
+
+      expect(result).toEqual(updatedService);
+      expect(mockService.updateService).toHaveBeenCalledWith(
+        serviceId,
+        updateServiceDto,
+        mockFiles,
+      );
     });
   });
 });
