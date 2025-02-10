@@ -29,7 +29,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { Roles } from './../common/decorators/roles.decorators';
 import { RolesGuard } from './../auth/guards/roles.guard';
 
-import { BlacklistedJwtAuthGuard } from 'src/auth/guards/blacklisted-jwt-auth.guard';
+import { BlacklistedJwtAuthGuard } from './..//auth/guards/blacklisted-jwt-auth.guard';
 
 
 @ApiTags('Services')
