@@ -13,6 +13,7 @@ import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 import * as crypto from 'crypto';
 import { PasswordResetTokensService } from './password-reset-token.service';
+import { TokenBlacklistService } from './token-blacklist.service';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +21,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private passwordResetTokenService: PasswordResetTokensService,
+    private tokenBlacklistService: TokenBlacklistService,
   ) {}
 
   async registerCustomer(createCustomerDto: CreateCustomerDto) {
@@ -108,10 +110,17 @@ export class AuthService {
 
   async logout(token: string) {
     try {
-      await this.jwtService.verify(token, {
+      const decoded = await this.jwtService.verify(token, {
         secret: process.env.JWT_SECRET,
-        ignoreExpiration: true,
       });
+
+      const expiresAt = new Date(decoded.exp * 1000);
+
+      await this.tokenBlacklistService.blacklistToken(token, expiresAt);
+      
+      await this.tokenBlacklistService.removeExpiredTokens();
+
+      
       return 'Successfully logged out';
     } catch (error) {
       throw new UnauthorizedException('Invalid token');

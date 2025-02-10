@@ -5,6 +5,8 @@ import {
   UnauthorizedException,
   Headers,
   BadRequestException,
+  Param,
+  UseGuards
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,6 +21,8 @@ import { LoginDto } from './dto/login.dto';
 
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+
+import { BlacklistedJwtAuthGuard } from './guards/blacklisted-jwt-auth.guard';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -55,6 +59,7 @@ export class AuthController {
   }
 
   @Post('logout')
+  @UseGuards(BlacklistedJwtAuthGuard)
   @ApiOperation({ summary: 'Logout user' })
   @ApiBearerAuth('access-token')
   @ApiResponse({ status: 200, description: 'Successfully logged out' })
@@ -73,17 +78,19 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Reset token generated' })
   async forgotPassword(@Body() { email }: ForgotPasswordDto) {
     const token = await this.authService.generatePasswordResetToken(email);
-    return { status: 'success', token };
+    return {
+      token,
+    };
   }
 
-  @Post('reset-password')
+  @Post('reset-password/:token')
   @ApiOperation({ summary: 'Reset password with token' })
-  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+  async resetPassword(@Param('token') token: string, @Body() resetPasswordDto: ResetPasswordDto) {
     if (resetPasswordDto.new_password !== resetPasswordDto.confirm_password) {
       throw new BadRequestException('Passwords do not match');
     }
     return this.authService.resetPassword(
-      resetPasswordDto.token,
+      token,
       resetPasswordDto.new_password,
     );
   }

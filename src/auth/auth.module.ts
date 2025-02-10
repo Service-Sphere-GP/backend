@@ -16,12 +16,17 @@ import {
 
 import { PasswordResetTokensService } from './password-reset-token.service';
 
+import { TokenBlacklist, TokenBlacklistSchema } from './schemas/token-blacklist.schema';
+import { TokenBlacklistService } from './token-blacklist.service';
+import { BlacklistedJwtAuthGuard } from './guards/blacklisted-jwt-auth.guard';
+
 @Module({
   imports: [
     UserModule,
     PassportModule,
     ConfigModule,
     MongooseModule.forFeature([
+      { name: TokenBlacklist.name, schema: TokenBlacklistSchema},
       { name: PasswordResetToken.name, schema: PasswordResetTokenSchema },
     ]),
     JwtModule.registerAsync({
@@ -38,8 +43,10 @@ import { PasswordResetTokensService } from './password-reset-token.service';
     JwtStrategy,
     RolesGuard,
     PasswordResetTokensService,
+    TokenBlacklistService,
+    BlacklistedJwtAuthGuard,
   ],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [AuthService, TokenBlacklistService,BlacklistedJwtAuthGuard],
 })
 export class AuthModule {}
