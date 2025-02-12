@@ -9,6 +9,7 @@ import { UserModule } from './users/user.module';
 import { ServicesModule } from './services/services.module';
 import { CloudinaryModule } from 'nestjs-cloudinary';
 import { AuthModule } from './auth/auth.module';
+import { ServiceBookingsModule } from './service-bookings/service-bookings.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { AuthModule } from './auth/auth.module';
     UserModule,
     ServicesModule,
     AuthModule,
+    ServiceBookingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
