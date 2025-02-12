@@ -1,31 +1,20 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Types } from 'mongoose';
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
 
-@Schema({ timestamps: true })
-export class ServiceBookingsModule {
-  @Prop({ type: Types.ObjectId, ref: 'Customer', required: true })
-  customer_id: Types.ObjectId;
+import {
+  ServiceBookings,
+  ServiceBookingsSchema,
+} from './schemas/service-booking.schema';
+import { ServiceBookingsService } from './service-bookings.service';
+import { ServiceBookingsController } from './service-bookings.controller';
 
-  @Prop({ type: Types.ObjectId, ref: 'Service', required: true })
-  service_id: Types.ObjectId;
-
-  @Prop({ required: true })
-  booking_date: Date;
-
-  @Prop({ required: true })
-  total_amount: number;
-
-  @Prop({
-    type: String,
-    enum: ['pending', 'confirmed', 'completed', 'cancelled'],
-    default: 'pending',
-  })
-  status: string;
-
-  @Prop({ type: Object })
-  booking_details: Record<string, any>;
-}
-
-export const ServiceBookingsSchema = SchemaFactory.createForClass(
-  ServiceBookingsModule,
-);
+@Module({
+  imports: [
+    MongooseModule.forFeature([
+      { name: ServiceBookings.name, schema: ServiceBookingsSchema },
+    ]),
+  ],
+  controllers: [ServiceBookingsController],
+  providers: [ServiceBookingsService],
+})
+export class ServiceBookingsModule {}
