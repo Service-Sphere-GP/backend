@@ -7,7 +7,6 @@ import { Service } from './schemas/service.schema';
 import { ServiceInterface } from './interfaces/service.interface';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { CloudinaryService } from 'nestjs-cloudinary';
-import { Express } from 'express';
 import { UpdateServiceDto } from './dto/update-service.dto';
 
 @Injectable()
@@ -153,5 +152,10 @@ export class ServicesService {
     await serviceProvider.save();
 
     return serviceObject;
+  }
+
+
+  async getServiceById(id: string): Promise<Service> {
+    return this.serviceModel.findById(id).exec();
   }
 }
