@@ -9,12 +9,6 @@ export class ServiceBookings {
   @Prop({ type: Types.ObjectId, ref: 'Service', required: true })
   service_id: Types.ObjectId;
 
-  @Prop({ required: true })
-  booking_date: Date;
-
-  @Prop({ required: true })
-  total_amount: number;
-
   @Prop({
     type: String,
     enum: ['pending', 'confirmed', 'completed', 'cancelled'],
