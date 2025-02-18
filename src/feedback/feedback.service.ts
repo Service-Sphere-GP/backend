@@ -33,10 +33,32 @@ export class FeedbackService {
   }
 
   async findOne(id: string): Promise<Feedback> {
+    console.log('id, ', id);
     const feedback = await this.feedbackModel.findById(id).exec();
     if (!feedback) {
       throw new NotFoundException(`Feedback with ID ${id} not found`);
     }
+    return feedback;
+  }
+
+  async delete(id: string, current_user: any): Promise<Feedback> {
+    console.log('id, ', id);
+    console.log('current_user, ', current_user);
+    // check if the feedback exists
+    const feedback = await this.feedbackModel.findById(id).exec();
+    if (!feedback) {
+      throw new NotFoundException(`Feedback with ID ${id} not found`);
+    }
+
+    // check if the feedback belongs to the user
+    if (
+      feedback.given_to_customer.toString() !== current_user.user_id &&
+      feedback.given_to_provider.toString() !== current_user.user_id
+    ) {
+      throw new NotFoundException(`Feedback with ID ${id} not found`);
+    }
+    await this.feedbackModel.findByIdAndDelete(id).exec();
+
     return feedback;
   }
 }
