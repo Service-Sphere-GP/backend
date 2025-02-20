@@ -10,6 +10,8 @@ import { ServicesModule } from './services/services.module';
 import { CloudinaryModule } from 'nestjs-cloudinary';
 import { AuthModule } from './auth/auth.module';
 import { ServiceBookingsModule } from './service-bookings/service-bookings.module';
+import { Feedback } from './feedback/schemas/feedback.schema';
+import { FeedbackModule } from './feedback/feedback.module';
 
 @Module({
   imports: [
@@ -37,6 +39,7 @@ import { ServiceBookingsModule } from './service-bookings/service-bookings.modul
     ServicesModule,
     AuthModule,
     ServiceBookingsModule,
+    FeedbackModule,
   ],
   controllers: [AppController],
   providers: [AppService],
