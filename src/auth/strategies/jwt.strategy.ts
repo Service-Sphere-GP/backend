@@ -1,10 +1,9 @@
-import { Injectable,UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { JwtPayload } from './../interfaces/jwt-payload.interface';
 import { UsersService } from '../../users/users.service';
 import { ConfigService } from '@nestjs/config';
-
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -21,7 +20,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: JwtPayload) {
     const user = await this.usersService.findById(payload.sub);
-    console.log(process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME);
     if (!user) {
       throw new UnauthorizedException();
     }
