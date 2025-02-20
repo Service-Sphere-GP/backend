@@ -9,6 +9,7 @@ import { UserModule } from './users/user.module';
 import { ServicesModule } from './services/services.module';
 import { CloudinaryModule } from 'nestjs-cloudinary';
 import { AuthModule } from './auth/auth.module';
+import { ServiceBookingsModule } from './service-bookings/service-bookings.module';
 import { Feedback } from './feedback/schemas/feedback.schema';
 import { FeedbackModule } from './feedback/feedback.module';
 
@@ -37,6 +38,7 @@ import { FeedbackModule } from './feedback/feedback.module';
     UserModule,
     ServicesModule,
     AuthModule,
+    ServiceBookingsModule,
     FeedbackModule,
   ],
   controllers: [AppController],

@@ -154,4 +154,12 @@ export class ServicesService {
 
     return serviceObject;
   }
+
+  async getServiceById(serviceId: string): Promise<ServiceInterface> {
+    const service = await this.serviceModel.findById(serviceId);
+    if (!service) {
+      throw new NotFoundException(`Service with ID ${serviceId} not found`);
+    }
+    return service;
+  }
 }
