@@ -12,6 +12,7 @@ import { AuthModule } from './auth/auth.module';
 import { ServiceBookingsModule } from './service-bookings/service-bookings.module';
 import { Feedback } from './feedback/schemas/feedback.schema';
 import { FeedbackModule } from './feedback/feedback.module';
+import { TicketsModule } from './tickets/tickets.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { FeedbackModule } from './feedback/feedback.module';
     AuthModule,
     ServiceBookingsModule,
     FeedbackModule,
+    TicketsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
