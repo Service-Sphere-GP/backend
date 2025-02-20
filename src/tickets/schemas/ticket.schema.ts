@@ -5,24 +5,24 @@ export type TicketDocument = Ticket & Document;
 
 @Schema({ timestamps: true })
 export class Ticket {
-  @Prop({ 
-    type: Types.ObjectId, 
-    ref: 'ServiceBookings', 
-    required: true 
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'ServiceBookings',
+    required: true,
   })
   booking_id: Types.ObjectId;
 
   @Prop({
     type: String,
     enum: ['low', 'medium', 'high'],
-    default: 'medium'
+    default: 'medium',
   })
   priority: string;
 
   @Prop({
     type: String,
     enum: ['open', 'in_progress', 'resolved', 'closed'],
-    default: 'open'
+    default: 'open',
   })
   status: string;
 
@@ -32,12 +32,12 @@ export class Ticket {
   @Prop()
   resolution_time?: Date;
 
-  @Prop({ 
-    type: Types.ObjectId, 
-    ref: 'ServiceProvider' 
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'ServiceProvider',
+    required: true,
   })
-  assigned_to?: Types.ObjectId;
-
+  assigned_to: string;
 }
 
 export const TicketSchema = SchemaFactory.createForClass(Ticket);

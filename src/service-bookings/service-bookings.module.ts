@@ -10,6 +10,7 @@ import { ServicesModule } from '../services/services.module';
 import { BookingsController } from './service-bookings.controller';
 import { BookingsService } from './service-bookings.service';
 import { Ticket, TicketSchema } from '../tickets/schemas/ticket.schema';
+import { UserModule } from 'src/users/user.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { Ticket, TicketSchema } from '../tickets/schemas/ticket.schema';
     ]),
     AuthModule,
     forwardRef(() => ServicesModule),
+    forwardRef(() => UserModule)
   ],
   controllers: [BookingsController],
   providers: [BookingsService],
