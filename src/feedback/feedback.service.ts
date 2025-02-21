@@ -33,7 +33,6 @@ export class FeedbackService {
   }
 
   async findOne(id: string): Promise<Feedback> {
-    console.log('id, ', id);
     const feedback = await this.feedbackModel.findById(id).exec();
     if (!feedback) {
       throw new NotFoundException(`Feedback with ID ${id} not found`);
@@ -42,8 +41,6 @@ export class FeedbackService {
   }
 
   async delete(id: string, current_user: any): Promise<Feedback> {
-    console.log('id, ', id);
-    console.log('current_user, ', current_user);
     // check if the feedback exists
     const feedback = await this.feedbackModel.findById(id).exec();
     if (!feedback) {

@@ -9,18 +9,22 @@ import { AuthModule } from '../auth/auth.module';
 import { ServicesModule } from '../services/services.module';
 import { BookingsController } from './service-bookings.controller';
 import { BookingsService } from './service-bookings.service';
+import { Ticket, TicketSchema } from '../tickets/schemas/ticket.schema';
+import { UserModule } from 'src/users/user.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: ServiceBookings.name, schema: ServiceBookingsSchema },
       { name: Service.name, schema: ServiceSchema },
+      { name: Ticket.name, schema: TicketSchema },
     ]),
     AuthModule,
-    forwardRef(() => ServicesModule), 
+    forwardRef(() => ServicesModule),
+    forwardRef(() => UserModule)
   ],
   controllers: [BookingsController],
   providers: [BookingsService],
-  exports: [BookingsService], 
+  exports: [BookingsService],
 })
 export class ServiceBookingsModule {}

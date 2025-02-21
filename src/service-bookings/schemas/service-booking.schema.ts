@@ -18,6 +18,9 @@ export class ServiceBookings {
 
   @Prop({ type: Object })
   booking_details: Record<string, any>;
+
+  @Prop({ type: Types.ObjectId, ref: 'Ticket', required: true })
+  ticket_id: Types.ObjectId;
 }
 
 export const ServiceBookingsSchema =
