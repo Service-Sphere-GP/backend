@@ -37,7 +37,7 @@ export class Ticket {
     ref: 'ServiceProvider',
     required: true,
   })
-  assigned_to: string;
+  assigned_to: Types.ObjectId;
 }
 
 export const TicketSchema = SchemaFactory.createForClass(Ticket);
