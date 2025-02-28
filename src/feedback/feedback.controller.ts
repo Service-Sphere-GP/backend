@@ -46,8 +46,6 @@ export class FeedbackController {
     @Param('id') id: string,
     @Request() req: any,
   ): Promise<Feedback> {
-    console.log('id, ', id);
-    console.log('current_user, ', req.user);
     return await this.feedbackService.delete(id, req.user);
   }
 }
