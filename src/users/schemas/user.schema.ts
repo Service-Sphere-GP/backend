@@ -35,6 +35,15 @@ export class User extends Document {
 
   @Prop()
   phone_number: string;
+
+  @Prop({ default: false })
+  email_verified: boolean;
+
+  @Prop()
+  email_verification_otp: string;
+
+  @Prop()
+  email_verification_expires: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
