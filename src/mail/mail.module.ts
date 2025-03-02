@@ -28,6 +28,7 @@ import { MailService } from './mail.service';
             strict: true,
           },
         },
+        preview: process.env.NODE_ENV === 'development',
       }),
     }),
   ],
