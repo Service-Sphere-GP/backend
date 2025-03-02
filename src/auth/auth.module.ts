@@ -8,6 +8,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { RolesGuard } from './guards/roles.guard';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { MailModule } from '../mail/mail.module';
 
 import {
   PasswordResetToken,
@@ -25,6 +26,7 @@ import { BlacklistedJwtAuthGuard } from './guards/blacklisted-jwt-auth.guard';
     forwardRef(() => UserModule),
     PassportModule,
     ConfigModule,
+    MailModule,
     MongooseModule.forFeature([
       { name: TokenBlacklist.name, schema: TokenBlacklistSchema},
       { name: PasswordResetToken.name, schema: PasswordResetTokenSchema },
