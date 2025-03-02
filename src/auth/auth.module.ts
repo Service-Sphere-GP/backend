@@ -17,9 +17,13 @@ import {
 
 import { PasswordResetTokensService } from './password-reset-token.service';
 
-import { TokenBlacklist, TokenBlacklistSchema } from './schemas/token-blacklist.schema';
+import {
+  TokenBlacklist,
+  TokenBlacklistSchema,
+} from './schemas/token-blacklist.schema';
 import { TokenBlacklistService } from './token-blacklist.service';
 import { BlacklistedJwtAuthGuard } from './guards/blacklisted-jwt-auth.guard';
+import { OtpService } from './otp.service';
 
 @Module({
   imports: [
@@ -28,7 +32,7 @@ import { BlacklistedJwtAuthGuard } from './guards/blacklisted-jwt-auth.guard';
     ConfigModule,
     MailModule,
     MongooseModule.forFeature([
-      { name: TokenBlacklist.name, schema: TokenBlacklistSchema},
+      { name: TokenBlacklist.name, schema: TokenBlacklistSchema },
       { name: PasswordResetToken.name, schema: PasswordResetTokenSchema },
     ]),
     JwtModule.registerAsync({
@@ -36,7 +40,9 @@ import { BlacklistedJwtAuthGuard } from './guards/blacklisted-jwt-auth.guard';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         secret: configService.get('JWT_SECRET'),
-        signOptions: { expiresIn: configService.get('JWT_ACCESS_TOKEN_EXPIRATION_TIME') },
+        signOptions: {
+          expiresIn: configService.get('JWT_ACCESS_TOKEN_EXPIRATION_TIME'),
+        },
       }),
     }),
   ],
@@ -47,8 +53,9 @@ import { BlacklistedJwtAuthGuard } from './guards/blacklisted-jwt-auth.guard';
     PasswordResetTokensService,
     TokenBlacklistService,
     BlacklistedJwtAuthGuard,
+    OtpService,
   ],
   controllers: [AuthController],
-  exports: [AuthService, TokenBlacklistService,BlacklistedJwtAuthGuard],
+  exports: [AuthService, TokenBlacklistService, BlacklistedJwtAuthGuard],
 })
 export class AuthModule {}
