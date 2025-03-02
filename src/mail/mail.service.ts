@@ -13,6 +13,21 @@ export class MailService {
     };
   }
 
+  async sendWelcomeEmail(email: string, name: string, otp: string): Promise<void> {
+    await this.mailerService.sendMail({
+      to: email,
+      subject: 'Welcome to Service Sphere! Confirm Your Email',
+      template: 'welcome',
+      context: {
+        ...this.commonContext(),
+        name,
+        otp,
+        verificationLink: `${process.env.URL}:${process.env.PORT}/api/v1/auth/verify-email/${otp}`,
+      },
+    });
+  }
+
+
   async sendPasswordResetEmail(
     email: string,
     name: string,
