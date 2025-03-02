@@ -144,7 +144,7 @@ export class AuthService {
     );
 
     try {
-      await this.mailService.sendPasswordResetEmail(email, 'hussein', token);
+      await this.mailService.sendPasswordResetEmail(email, user.first_name, token);
     } catch (error) {
       console.error('Error sending email:', error);
     }
