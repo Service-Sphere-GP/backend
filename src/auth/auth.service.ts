@@ -14,6 +14,7 @@ import { JwtPayload } from './interfaces/jwt-payload.interface';
 import * as crypto from 'crypto';
 import { PasswordResetTokensService } from './password-reset-token.service';
 import { TokenBlacklistService } from './token-blacklist.service';
+import { MailService } from './../mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +23,7 @@ export class AuthService {
     private jwtService: JwtService,
     private passwordResetTokenService: PasswordResetTokensService,
     private tokenBlacklistService: TokenBlacklistService,
+    private mailService: MailService,
   ) {}
 
   async registerCustomer(createCustomerDto: CreateCustomerDto) {
@@ -32,12 +34,11 @@ export class AuthService {
       throw new BadRequestException('Email already exists');
     }
 
-    
     try {
       const customerData = {
         ...createCustomerDto,
         role: 'customer',
-      }
+      };
       const customer = await this.usersService.createCustomer(customerData);
       return customer;
     } catch (error) {
@@ -59,8 +60,9 @@ export class AuthService {
       const serviceProviderData = {
         ...createServiceProviderDto,
         role: 'service_provider',
-      }
-      const serviceProvider = await this.usersService.createServiceProvider(serviceProviderData);
+      };
+      const serviceProvider =
+        await this.usersService.createServiceProvider(serviceProviderData);
       return serviceProvider;
     } catch (error) {
       throw new BadRequestException('Failed to create service provider');
@@ -90,14 +92,12 @@ export class AuthService {
     };
 
     const token = await this.jwtService.sign(payload, {
-        expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME,
-        secret: process.env.JWT_SECRET,
-      }
-    );
+      expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME,
+      secret: process.env.JWT_SECRET,
+    });
 
     return token;
   }
-
 
   async login(loginDto: any) {
     const user = await this.validateUser(loginDto.email, loginDto.password);
@@ -117,10 +117,9 @@ export class AuthService {
       const expiresAt = new Date(decoded.exp * 1000);
 
       await this.tokenBlacklistService.blacklistToken(token, expiresAt);
-      
+
       await this.tokenBlacklistService.removeExpiredTokens();
 
-      
       return 'Successfully logged out';
     } catch (error) {
       throw new UnauthorizedException('Invalid token');
@@ -144,7 +143,13 @@ export class AuthService {
       expires_at,
     );
 
-    return token;
+    try {
+      await this.mailService.sendPasswordResetEmail(email, 'hussein', token);
+    } catch (error) {
+      console.error('Error sending email:', error);
+    }
+
+    return 'Reset token generated successfully';
   }
 
   async resetPassword(token: string, newPassword: string) {

@@ -6,7 +6,8 @@ import {
   Headers,
   BadRequestException,
   Param,
-  UseGuards
+  UseGuards,
+  Patch,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -72,26 +73,27 @@ export class AuthController {
     return this.authService.logout(token);
   }
 
-
   @Post('forgot-password')
   @ApiOperation({ summary: 'Generate password reset token' })
   @ApiResponse({ status: 200, description: 'Reset token generated' })
   async forgotPassword(@Body() { email }: ForgotPasswordDto) {
-    const token = await this.authService.generatePasswordResetToken(email);
-    return {
-      token,
-    };
+    try {
+      await this.authService.generatePasswordResetToken(email);
+    } catch (error) {
+      throw new BadRequestException('token generation failed');
+    }
+    return 'Reset token generated successfully';
   }
 
-  @Post('reset-password/:token')
+  @Patch('reset-password/:token')
   @ApiOperation({ summary: 'Reset password with token' })
-  async resetPassword(@Param('token') token: string, @Body() resetPasswordDto: ResetPasswordDto) {
+  async resetPassword(
+    @Param('token') token: string,
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ) {
     if (resetPasswordDto.new_password !== resetPasswordDto.confirm_password) {
       throw new BadRequestException('Passwords do not match');
     }
-    return this.authService.resetPassword(
-      token,
-      resetPasswordDto.new_password,
-    );
+    return this.authService.resetPassword(token, resetPasswordDto.new_password);
   }
 }
