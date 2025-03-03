@@ -16,6 +16,10 @@ import { PasswordResetTokensService } from './password-reset-token.service';
 import { TokenBlacklistService } from './token-blacklist.service';
 import { MailService } from './../mail/mail.service';
 import { OtpService } from './otp.service';
+import { User } from './../users/schemas/user.schema';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+
 
 @Injectable()
 export class AuthService {
@@ -26,6 +30,7 @@ export class AuthService {
     private tokenBlacklistService: TokenBlacklistService,
     private mailService: MailService,
     private otpService: OtpService,
+    @InjectModel(User.name) private userModel: Model<User>,
   ) {}
 
   async registerCustomer(createCustomerDto: CreateCustomerDto) {
@@ -227,5 +232,16 @@ export class AuthService {
     }
 
     return 'Password updated successfully';
+  }
+
+  async verifyEmail(userId: string, otp: string): Promise<void> {
+    const isValid = await this.otpService.validateOtp(userId, otp);
+    if (!isValid) throw new BadRequestException('Invalid or expired OTP');
+
+    await this.userModel.findByIdAndUpdate(userId, {
+      email_verified: true,
+      email_verification_otp: null,
+      email_verification_expires: null,
+    });
   }
 }

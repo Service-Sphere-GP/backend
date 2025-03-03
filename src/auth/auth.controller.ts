@@ -14,6 +14,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiBody,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { CreateCustomerDto } from './../users/dto/create-customer.dto';
@@ -24,11 +25,16 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 
 import { BlacklistedJwtAuthGuard } from './guards/blacklisted-jwt-auth.guard';
+import { CurrentUser } from './../common/decorators/current-user.decorator';
+import { OtpService } from './otp.service';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private otpService: OtpService,
+  ) {}
 
   @Post('register/customer')
   @ApiOperation({ summary: 'Register a new customer' })
@@ -95,5 +101,24 @@ export class AuthController {
       throw new BadRequestException('Passwords do not match');
     }
     return this.authService.resetPassword(token, resetPasswordDto.new_password);
+  }
+
+  @Post('verify-email/:userId')
+  @ApiOperation({ summary: 'Verify email with OTP' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        otp: { type: 'string', example: '123456' },
+      },
+    },
+  })
+  async verifyEmail(
+    @Param('userId') userId: string,
+    @Body() body: { otp: string },
+  ) {
+    console.log('body', body);
+    console.log('userId', userId);
+    return this.authService.verifyEmail(userId, body.otp);
   }
 }
