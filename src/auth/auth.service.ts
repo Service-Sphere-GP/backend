@@ -14,6 +14,12 @@ import { JwtPayload } from './interfaces/jwt-payload.interface';
 import * as crypto from 'crypto';
 import { PasswordResetTokensService } from './password-reset-token.service';
 import { TokenBlacklistService } from './token-blacklist.service';
+import { MailService } from './../mail/mail.service';
+import { OtpService } from './otp.service';
+import { User } from './../users/schemas/user.schema';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+
 
 @Injectable()
 export class AuthService {
@@ -22,6 +28,9 @@ export class AuthService {
     private jwtService: JwtService,
     private passwordResetTokenService: PasswordResetTokensService,
     private tokenBlacklistService: TokenBlacklistService,
+    private mailService: MailService,
+    private otpService: OtpService,
+    @InjectModel(User.name) private userModel: Model<User>,
   ) {}
 
   async registerCustomer(createCustomerDto: CreateCustomerDto) {
@@ -32,13 +41,30 @@ export class AuthService {
       throw new BadRequestException('Email already exists');
     }
 
-    
     try {
       const customerData = {
         ...createCustomerDto,
         role: 'customer',
-      }
+      };
       const customer = await this.usersService.createCustomer(customerData);
+
+      const otp = this.otpService.generateOtp();
+
+      try {
+        await this.otpService.saveOtp(customer.id, otp);
+      } catch (error) {
+        throw new BadRequestException('Failed to save OTP');
+      }
+
+      try {
+        await this.mailService.sendWelcomeEmail(
+          customer.email,
+          customer.first_name,
+          otp,
+        );
+      } catch (error) {
+        console.log('Error sending email:', error);
+      }
       return customer;
     } catch (error) {
       throw new BadRequestException('Failed to create customer');
@@ -59,8 +85,28 @@ export class AuthService {
       const serviceProviderData = {
         ...createServiceProviderDto,
         role: 'service_provider',
+      };
+      const serviceProvider =
+        await this.usersService.createServiceProvider(serviceProviderData);
+
+      const otp = this.otpService.generateOtp();
+
+      try {
+        await this.otpService.saveOtp(serviceProvider.id, otp);
+      } catch (error) {
+        throw new BadRequestException('Failed to save OTP');
       }
-      const serviceProvider = await this.usersService.createServiceProvider(serviceProviderData);
+
+      try {
+        await this.mailService.sendWelcomeEmail(
+          serviceProvider.email,
+          serviceProvider.first_name,
+          otp,
+        );
+      } catch (error) {
+        console.log('Error sending email:', error);
+      }
+
       return serviceProvider;
     } catch (error) {
       throw new BadRequestException('Failed to create service provider');
@@ -90,14 +136,12 @@ export class AuthService {
     };
 
     const token = await this.jwtService.sign(payload, {
-        expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME,
-        secret: process.env.JWT_SECRET,
-      }
-    );
+      expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME,
+      secret: process.env.JWT_SECRET,
+    });
 
     return token;
   }
-
 
   async login(loginDto: any) {
     const user = await this.validateUser(loginDto.email, loginDto.password);
@@ -117,10 +161,9 @@ export class AuthService {
       const expiresAt = new Date(decoded.exp * 1000);
 
       await this.tokenBlacklistService.blacklistToken(token, expiresAt);
-      
+
       await this.tokenBlacklistService.removeExpiredTokens();
 
-      
       return 'Successfully logged out';
     } catch (error) {
       throw new UnauthorizedException('Invalid token');
@@ -144,7 +187,17 @@ export class AuthService {
       expires_at,
     );
 
-    return token;
+    try {
+      await this.mailService.sendPasswordResetEmail(
+        email,
+        user.first_name,
+        token,
+      );
+    } catch (error) {
+      console.error('Error sending email:', error);
+    }
+
+    return 'Reset token generated successfully';
   }
 
   async resetPassword(token: string, newPassword: string) {
@@ -179,5 +232,16 @@ export class AuthService {
     }
 
     return 'Password updated successfully';
+  }
+
+  async verifyEmail(userId: string, otp: string): Promise<void> {
+    const isValid = await this.otpService.validateOtp(userId, otp);
+    if (!isValid) throw new BadRequestException('Invalid or expired OTP');
+
+    await this.userModel.findByIdAndUpdate(userId, {
+      email_verified: true,
+      email_verification_otp: null,
+      email_verification_expires: null,
+    });
   }
 }
