@@ -23,6 +23,7 @@ import { LoginDto } from './dto/login.dto';
 
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ResendVerificationDto } from './dto/resend-verification.dto';
 
 import { BlacklistedJwtAuthGuard } from './guards/blacklisted-jwt-auth.guard';
 import { CurrentUser } from './../common/decorators/current-user.decorator';
@@ -120,5 +121,22 @@ export class AuthController {
     console.log('body', body);
     console.log('userId', userId);
     return this.authService.verifyEmail(userId, body.otp);
+  }
+
+  @Post('resend-verification')
+  @ApiOperation({ summary: 'Resend email verification OTP' })
+  @ApiResponse({
+    status: 200,
+    description: 'Verification email resent successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Email already verified or invalid request',
+  })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async resendVerificationOtp(
+    @Body() resendVerificationDto: ResendVerificationDto,
+  ) {
+    return this.authService.resendVerificationOtp(resendVerificationDto.email);
   }
 }

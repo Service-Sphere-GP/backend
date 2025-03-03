@@ -13,7 +13,11 @@ export class MailService {
     };
   }
 
-  async sendWelcomeEmail(email: string, name: string, otp: string): Promise<void> {
+  async sendWelcomeEmail(
+    email: string,
+    name: string,
+    otp: string,
+  ): Promise<void> {
     await this.mailerService.sendMail({
       to: email,
       subject: 'Welcome to Service Sphere! Confirm Your Email',
@@ -26,7 +30,6 @@ export class MailService {
       },
     });
   }
-
 
   async sendPasswordResetEmail(
     email: string,
@@ -47,6 +50,32 @@ export class MailService {
       });
     } catch (error) {
       console.error(`Failed to send password reset email to ${email}:`, error);
+    }
+  }
+
+  async sendVerificationResendEmail(
+    email: string,
+    name: string,
+    otp: string,
+  ): Promise<void> {
+    try {
+      await this.mailerService.sendMail({
+        to: email,
+        subject: 'Verify Your Email - Service Sphere',
+        template: 'verification-resend',
+        context: {
+          ...this.commonContext(),
+          name,
+          otp,
+          verificationLink: `${process.env.URL}:${process.env.PORT}/api/v1/auth/verify-email/${otp}`,
+        },
+      });
+    } catch (error) {
+      console.error(
+        `Failed to send verification resend email to ${email}:`,
+        error,
+      );
+      throw error;
     }
   }
 }
