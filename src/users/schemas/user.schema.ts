@@ -44,6 +44,9 @@ export class User extends Document {
 
   @Prop()
   email_verification_expires: Date;
+
+  @Prop({ default: true })
+  emailSent: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

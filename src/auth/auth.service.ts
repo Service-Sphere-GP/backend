@@ -63,7 +63,10 @@ export class AuthService {
         );
       } catch (error) {
         console.log('Error sending email:', error);
+        customer.emailSent = false;
       }
+
+      customer.emailSent = customer.emailSent === false ? false : true;
       return customer;
     } catch (error) {
       throw new BadRequestException('Failed to create customer');
@@ -104,8 +107,11 @@ export class AuthService {
         );
       } catch (error) {
         console.log('Error sending email:', error);
+        serviceProvider.emailSent = false;
       }
 
+      serviceProvider.emailSent =
+        serviceProvider.emailSent === false ? false : true;
       return serviceProvider;
     } catch (error) {
       throw new BadRequestException('Failed to create service provider');
