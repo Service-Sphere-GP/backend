@@ -2,7 +2,7 @@
   <head>
     <meta charset='utf-8' />
     <meta name='viewport' content='width=device-width, initial-scale=1' />
-    <title>Password Reset</title>
+    <title>{{subject}}</title>
   </head>
   <body>
     <div>
@@ -10,24 +10,19 @@
     </div>
 
     <div>
-      <h2>Password Reset Request</h2>
+      <h2>{{title}}</h2>
 
       <p>Hello {{name}},</p>
 
-      <p>There was a request to change your password. If you did not make this
-        request, please ignore this email.</p>
-
-      <p>Otherwise, please click the link below to reset your password:</p>
+      <p>{{message}}</p>
 
       <div>
-        <a href='{{url}}'>Reset Password</a>
+        <strong>{{otp}}</strong>
       </div>
 
-      <p>If the link doesn't work, you can copy and paste this link into your
-        browser:</p>
-      <p>{{url}}</p>
+      <p>This code will expire in 15 minutes.</p>
 
-      <p>This link will expire in 1 hour.</p>
+      <p>If you didn't request this code, please ignore this email.</p>
 
       <p>Regards,<br />The {{appName}} Team</p>
     </div>
