@@ -249,4 +249,36 @@ export class AuthService {
       email_verification_expires: null,
     });
   }
+
+  async resendVerificationOtp(email: string): Promise<{ message: string }> {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.email_verified) {
+      throw new BadRequestException('Email already verified');
+    }
+
+    const otp = this.otpService.generateOtp();
+
+    try {
+      await this.otpService.saveOtp(user._id.toString(), otp);
+    } catch (error) {
+      throw new BadRequestException('Failed to save OTP');
+    }
+
+    try {
+      await this.mailService.sendVerificationResendEmail(
+        user.email,
+        user.first_name,
+        otp,
+      );
+    } catch (error) {
+      console.log('Error sending email:', error);
+      throw new BadRequestException('Failed to send verification email');
+    }
+
+    return { message: 'Verification email resent successfully' };
+  }
 }
