@@ -6,7 +6,11 @@ import { UsersService } from './../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { PasswordResetTokensService } from './password-reset-token.service';
 import { TokenBlacklistService } from './token-blacklist.service';
+import { MailService } from './../mail/mail.service';
+import { OtpService } from './otp.service';
 import { UnauthorizedException, NotFoundException } from '@nestjs/common';
+import { getModelToken } from '@nestjs/mongoose';
+import { User } from './../users/schemas/user.schema';
 
 describe('AuthService', () => {
   let authService: AuthService;
@@ -14,6 +18,9 @@ describe('AuthService', () => {
   let jwtService: Partial<JwtService>;
   let passwordResetTokensService: Partial<PasswordResetTokensService>;
   let tokenBlacklistService: Partial<TokenBlacklistService>;
+  let mailService: Partial<MailService>;
+  let otpService: Partial<OtpService>;
+  let userModel: any;
 
   beforeEach(async () => {
     usersService = {
@@ -42,13 +49,35 @@ describe('AuthService', () => {
       removeExpiredTokens: jest.fn(),
     };
 
+    mailService = {
+      sendWelcomeEmail: jest.fn().mockResolvedValue(undefined),
+      sendPasswordResetEmail: jest.fn().mockResolvedValue(undefined),
+    };
+
+    otpService = {
+      generateOtp: jest.fn().mockReturnValue('123456'),
+      saveOtp: jest.fn().mockResolvedValue(undefined),
+      validateOtp: jest.fn(),
+    };
+
+    userModel = {
+      findByIdAndUpdate: jest.fn().mockResolvedValue({}),
+      findById: jest.fn().mockResolvedValue({}),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
         { provide: UsersService, useValue: usersService },
         { provide: JwtService, useValue: jwtService },
-        { provide: PasswordResetTokensService, useValue: passwordResetTokensService },
+        {
+          provide: PasswordResetTokensService,
+          useValue: passwordResetTokensService,
+        },
         { provide: TokenBlacklistService, useValue: tokenBlacklistService },
+        { provide: MailService, useValue: mailService },
+        { provide: OtpService, useValue: otpService },
+        { provide: getModelToken(User.name), useValue: userModel },
       ],
     }).compile();
 
@@ -72,18 +101,21 @@ describe('AuthService', () => {
         last_name: 'User',
         role: 'customer',
       });
-      await expect(authService.registerCustomer(createCustomerDto))
-        .rejects.toThrow('Email already exists');
+      await expect(
+        authService.registerCustomer(createCustomerDto),
+      ).rejects.toThrow('Email already exists');
     });
 
     it('should create customer if email does not exist', async () => {
       (usersService.findByEmail as jest.Mock).mockResolvedValue(null);
       const fakeCustomer = {
+        id: '1',
         _id: '1',
         email: 'customer@example.com',
         first_name: 'John',
         last_name: 'Doe',
         role: 'customer',
+        emailSent: true,
       };
       (usersService.createCustomer as jest.Mock).mockResolvedValue(
         fakeCustomer,
@@ -91,6 +123,38 @@ describe('AuthService', () => {
 
       const result = await authService.registerCustomer(createCustomerDto);
       expect(result).toEqual(fakeCustomer);
+      expect(otpService.generateOtp).toHaveBeenCalled();
+      expect(otpService.saveOtp).toHaveBeenCalledWith(
+        fakeCustomer.id,
+        '123456',
+      );
+      expect(mailService.sendWelcomeEmail).toHaveBeenCalledWith(
+        fakeCustomer.email,
+        fakeCustomer.first_name,
+        '123456',
+      );
+    });
+
+    it('should set emailSent to false if sending email fails', async () => {
+      (usersService.findByEmail as jest.Mock).mockResolvedValue(null);
+      const fakeCustomer = {
+        id: '1',
+        _id: '1',
+        email: 'customer@example.com',
+        first_name: 'John',
+        last_name: 'Doe',
+        role: 'customer',
+        emailSent: true,
+      };
+      (usersService.createCustomer as jest.Mock).mockResolvedValue(
+        fakeCustomer,
+      );
+      (mailService.sendWelcomeEmail as jest.Mock).mockRejectedValue(
+        new Error('Email error'),
+      );
+
+      const result = await authService.registerCustomer(createCustomerDto);
+      expect(result.emailSent).toBe(false);
     });
 
     it('should return error if create customer fails', async () => {
@@ -98,8 +162,9 @@ describe('AuthService', () => {
       (usersService.createCustomer as jest.Mock).mockRejectedValue(
         new Error('DB error'),
       );
-      await expect(authService.registerCustomer(createCustomerDto))
-        .rejects.toThrow('Failed to create customer');
+      await expect(
+        authService.registerCustomer(createCustomerDto),
+      ).rejects.toThrow('Failed to create customer');
     });
   });
 
@@ -123,10 +188,9 @@ describe('AuthService', () => {
         last_name: 'User',
         role: 'service_provider',
       });
-      await expect(authService.registerServiceProvider(
-        createServiceProviderDto,
-      ))
-        .rejects.toThrow('Email already exists');
+      await expect(
+        authService.registerServiceProvider(createServiceProviderDto),
+      ).rejects.toThrow('Email already exists');
     });
 
     it('should create service provider if email does not exist', async () => {
@@ -156,10 +220,9 @@ describe('AuthService', () => {
       (usersService.createServiceProvider as jest.Mock).mockRejectedValue(
         new Error('DB error'),
       );
-      await expect(authService.registerServiceProvider(
-        createServiceProviderDto,
-      ))
-        .rejects.toThrow('Failed to create service provider');
+      await expect(
+        authService.registerServiceProvider(createServiceProviderDto),
+      ).rejects.toThrow('Failed to create service provider');
     });
   });
 
@@ -183,37 +246,40 @@ describe('AuthService', () => {
     };
 
     beforeEach(() => {
-      jest.spyOn(bcrypt, 'compare').mockImplementation((pass, hash) => 
-        Promise.resolve(pass === 'password123' && hash === 'hashedPass')
-      );
+      jest
+        .spyOn(bcrypt, 'compare')
+        .mockImplementation((pass, hash) =>
+          Promise.resolve(pass === 'password123' && hash === 'hashedPass'),
+        );
       (jwtService.sign as jest.Mock).mockReturnValue('jwt_token');
     });
 
     it('should return token and user data for valid credentials', async () => {
       (usersService.findByEmail as jest.Mock).mockResolvedValue(fakeUser);
-      
+
       const result = await authService.login(loginDto);
-      
+
       expect(result).toEqual({
         token: 'jwt_token',
-        user: fakeUser._doc
+        user: fakeUser._doc,
       });
     });
 
     it('should throw UnauthorizedException for invalid credentials', async () => {
       (usersService.findByEmail as jest.Mock).mockResolvedValue(null);
-      
-      await expect(authService.login(loginDto))
-        .rejects.toThrow(UnauthorizedException);
+
+      await expect(authService.login(loginDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 
   describe('logout', () => {
     const validToken = 'valid_token';
-    
+
     beforeEach(() => {
-      (jwtService.verify as jest.Mock).mockReturnValue({ 
-        exp: Math.floor(Date.now() / 1000) + 3600 
+      (jwtService.verify as jest.Mock).mockReturnValue({
+        exp: Math.floor(Date.now() / 1000) + 3600,
       });
     });
 
@@ -230,8 +296,9 @@ describe('AuthService', () => {
         throw new Error('Invalid token');
       });
 
-      await expect(authService.logout(validToken))
-        .rejects.toThrow(UnauthorizedException);
+      await expect(authService.logout(validToken)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 
@@ -252,18 +319,25 @@ describe('AuthService', () => {
 
     it('should delete existing tokens and create new one', async () => {
       (usersService.findByEmail as jest.Mock).mockResolvedValue(user);
-      (passwordResetTokensService.createToken as jest.Mock).mockResolvedValue(
-        {},
-      );
 
-      const token = await authService.generatePasswordResetToken(email);
+      // Mock crypto to return predictable tokens
+      jest.spyOn(crypto, 'randomBytes').mockImplementation(() => {
+        return {
+          toString: () => 'mocked-token',
+        } as any;
+      });
+
+      const result = await authService.generatePasswordResetToken(email);
 
       expect(
         passwordResetTokensService.deleteAllTokensForUser,
       ).toHaveBeenCalledWith('123');
       expect(passwordResetTokensService.createToken).toHaveBeenCalled();
-      expect(typeof token).toBe('string');
-      expect(token.length).toBe(40);
+      expect(typeof result).toBe('string');
+      expect(result).toBe('Reset token generated successfully');
+
+      // Clean up the mock
+      (crypto.randomBytes as jest.Mock).mockRestore();
     });
   });
 
@@ -282,7 +356,7 @@ describe('AuthService', () => {
     };
     const validResetToken = {
       _id: {
-        toString: () => 'token-id', 
+        toString: () => 'token-id',
       },
       user_id: '123',
       expires_at: new Date(Date.now() + 3600000),
