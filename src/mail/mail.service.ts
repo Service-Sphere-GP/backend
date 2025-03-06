@@ -15,32 +15,86 @@ export class MailService {
     };
   }
 
+  /**
+   * Send a verification email - used for both welcome and verification resend emails
+   * @param email The recipient's email
+   * @param name The recipient's name
+   * @param otp The verification code
+   * @param isWelcome Whether this is a welcome email (true) or verification resend email (false)
+   */
+  async sendVerificationEmail(
+    email: string,
+    name: string,
+    otp: string,
+    isWelcome: boolean = false,
+  ): Promise<void> {
+    const subject = isWelcome
+      ? 'Welcome to Service Sphere! Confirm Your Email'
+      : 'Verify Your Email - Service Sphere';
+
+    const title = isWelcome
+      ? 'Welcome to Service Sphere!'
+      : 'Verify Your Email Address';
+
+    const message = isWelcome
+      ? 'Thank you for joining Service Sphere. Please use the following code to verify your email address:'
+      : 'You requested a new verification code for your Service Sphere account. Please use the following code to verify your email address:';
+
+    try {
+      this.logger.log(
+        `Sending ${isWelcome ? 'welcome' : 'verification resend'} email to ${email}`,
+      );
+      await this.mailerService.sendMail({
+        to: email,
+        subject: subject,
+        template: 'verification-email',
+        context: {
+          ...this.commonContext(),
+          name,
+          otp,
+          subject,
+          title,
+          message,
+        },
+      });
+      this.logger.log(
+        `${isWelcome ? 'Welcome' : 'Verification resend'} email sent successfully to ${email}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send ${isWelcome ? 'welcome' : 'verification resend'} email to ${email}: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Send a welcome email to a new user
+   * @param email The recipient's email
+   * @param name The recipient's name
+   * @param otp The verification code
+   */
   async sendWelcomeEmail(
     email: string,
     name: string,
     otp: string,
   ): Promise<void> {
-    try {
-      this.logger.log(`Sending welcome email to ${email}`);
-      await this.mailerService.sendMail({
-        to: email,
-        subject: 'Welcome to Service Sphere! Confirm Your Email',
-        template: 'welcome',
-        context: {
-          ...this.commonContext(),
-          name,
-          otp,
-          verificationLink: `${process.env.URL}:${process.env.PORT}/api/v1/auth/verify-email/${otp}`,
-        },
-      });
-      this.logger.log(`Welcome email sent successfully to ${email}`);
-    } catch (error) {
-      this.logger.error(
-        `Failed to send welcome email to ${email}: ${error.message}`,
-        error.stack,
-      );
-      throw error; 
-    }
+    return this.sendVerificationEmail(email, name, otp, true);
+  }
+
+  /**
+   * Send a verification resend email
+   * @param email The recipient's email
+   * @param name The recipient's name
+   * @param otp The verification code
+   */
+  async sendVerificationResendEmail(
+    email: string,
+    name: string,
+    otp: string,
+  ): Promise<void> {
+    return this.sendVerificationEmail(email, name, otp, false);
   }
 
   async sendPasswordResetEmail(
@@ -58,7 +112,7 @@ export class MailService {
           ...this.commonContext(),
           name,
           token,
-          resetLink: `${process.env.URL}:${process.env.PORT}/api/v1/auth/reset-password/${token}`,
+          url: `${process.env.URL || 'http://localhost'}:${process.env.PORT || '3000'}/api/v1/auth/reset-password/${token}`,
         },
       });
       this.logger.log(`Password reset email sent successfully to ${email}`);
@@ -66,32 +120,6 @@ export class MailService {
       this.logger.error(
         `Failed to send password reset email to ${email}: ${error.message}`,
         error.stack,
-      );
-      throw error; 
-    }
-  }
-
-  async sendVerificationResendEmail(
-    email: string,
-    name: string,
-    otp: string,
-  ): Promise<void> {
-    try {
-      await this.mailerService.sendMail({
-        to: email,
-        subject: 'Verify Your Email - Service Sphere',
-        template: 'verification-resend',
-        context: {
-          ...this.commonContext(),
-          name,
-          otp,
-          verificationLink: `${process.env.URL}:${process.env.PORT}/api/v1/auth/verify-email/${otp}`,
-        },
-      });
-    } catch (error) {
-      console.error(
-        `Failed to send verification resend email to ${email}:`,
-        error,
       );
       throw error;
     }
