@@ -5,10 +5,12 @@ import { AuthService } from './auth.service';
 import { CreateCustomerDto } from './../users/dto/create-customer.dto';
 import { CreateServiceProviderDto } from './../users/dto/create-service-provider.dto';
 import { LoginDto } from './dto/login.dto';
+import { OtpService } from './otp.service';
 
 describe('AuthController', () => {
   let authController: AuthController;
   let authService: AuthService;
+  let otpService: OtpService;
 
   const mockAuthService = {
     registerCustomer: jest.fn(),
@@ -17,16 +19,27 @@ describe('AuthController', () => {
     logout: jest.fn(),
     generatePasswordResetToken: jest.fn(),
     resetPassword: jest.fn(),
+    verifyEmail: jest.fn(),
+  };
+
+  const mockOtpService = {
+    generateOtp: jest.fn(),
+    saveOtp: jest.fn(),
+    validateOtp: jest.fn(),
   };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [{ provide: AuthService, useValue: mockAuthService }],
+      providers: [
+        { provide: AuthService, useValue: mockAuthService },
+        { provide: OtpService, useValue: mockOtpService },
+      ],
     }).compile();
 
     authController = module.get<AuthController>(AuthController);
     authService = module.get<AuthService>(AuthService);
+    otpService = module.get<OtpService>(OtpService);
   });
 
   describe('registerCustomer', () => {
@@ -51,7 +64,9 @@ describe('AuthController', () => {
 
       const result = await authController.registerCustomer(createCustomerDto);
       expect(result).toEqual(expectedResult);
-      expect(authService.registerCustomer).toHaveBeenCalledWith(createCustomerDto);
+      expect(authService.registerCustomer).toHaveBeenCalledWith(
+        createCustomerDto,
+      );
     });
   });
 
@@ -81,9 +96,13 @@ describe('AuthController', () => {
 
       mockAuthService.registerServiceProvider.mockResolvedValue(expectedResult);
 
-      const result = await authController.registerServiceProvider(createServiceProviderDto);
+      const result = await authController.registerServiceProvider(
+        createServiceProviderDto,
+      );
       expect(result).toEqual(expectedResult);
-      expect(authService.registerServiceProvider).toHaveBeenCalledWith(createServiceProviderDto);
+      expect(authService.registerServiceProvider).toHaveBeenCalledWith(
+        createServiceProviderDto,
+      );
     });
   });
 
@@ -100,7 +119,7 @@ describe('AuthController', () => {
           _id: '789',
           email: 'test@example.com',
           role: 'customer',
-        }
+        },
       };
 
       mockAuthService.login.mockResolvedValue(expectedResult);
@@ -122,19 +141,24 @@ describe('AuthController', () => {
     });
 
     it('should throw UnauthorizedException for invalid authorization header', async () => {
-      await expect(authController.logout('Invalid-header')).rejects.toThrow(UnauthorizedException);
+      await expect(authController.logout('Invalid-header')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 
   describe('forgotPassword', () => {
     it('should generate password reset token', async () => {
       const email = 'test@example.com';
-      const token = 'reset_token';
-      mockAuthService.generatePasswordResetToken.mockResolvedValue(token);
+      mockAuthService.generatePasswordResetToken.mockResolvedValue(
+        'reset_token',
+      );
 
       const result = await authController.forgotPassword({ email });
-      expect(result).toEqual({ token });
-      expect(authService.generatePasswordResetToken).toHaveBeenCalledWith(email);
+      expect(result).toEqual('Reset token generated successfully');
+      expect(authService.generatePasswordResetToken).toHaveBeenCalledWith(
+        email,
+      );
     });
   });
 
@@ -146,11 +170,19 @@ describe('AuthController', () => {
         confirm_password: 'newpass123',
       };
 
-      mockAuthService.resetPassword.mockResolvedValue('Password updated successfully');
+      mockAuthService.resetPassword.mockResolvedValue(
+        'Password updated successfully',
+      );
 
-      const result = await authController.resetPassword(token, resetPasswordDto);
+      const result = await authController.resetPassword(
+        token,
+        resetPasswordDto,
+      );
       expect(result).toBe('Password updated successfully');
-      expect(authService.resetPassword).toHaveBeenCalledWith(token, resetPasswordDto.new_password);
+      expect(authService.resetPassword).toHaveBeenCalledWith(
+        token,
+        resetPasswordDto.new_password,
+      );
     });
 
     it('should throw BadRequestException when passwords do not match', async () => {
@@ -161,8 +193,36 @@ describe('AuthController', () => {
       };
 
       await expect(
-        authController.resetPassword(token, resetPasswordDto)
+        authController.resetPassword(token, resetPasswordDto),
       ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('verifyEmail', () => {
+    it('should verify email with valid OTP', async () => {
+      const userId = '123456';
+      const otp = '123456';
+
+      mockAuthService.verifyEmail.mockResolvedValue(undefined);
+
+      await authController.verifyEmail(userId, { otp });
+
+      expect(authService.verifyEmail).toHaveBeenCalledWith(userId, otp);
+    });
+
+    it('should throw exception when verification fails', async () => {
+      const userId = '123456';
+      const otp = 'invalid-otp';
+
+      mockAuthService.verifyEmail.mockRejectedValue(
+        new BadRequestException('Invalid or expired OTP'),
+      );
+
+      await expect(authController.verifyEmail(userId, { otp })).rejects.toThrow(
+        BadRequestException,
+      );
+
+      expect(authService.verifyEmail).toHaveBeenCalledWith(userId, otp);
     });
   });
 });
