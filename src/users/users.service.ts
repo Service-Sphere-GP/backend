@@ -26,6 +26,26 @@ export class UsersService {
     return this.userModel.findById(userId).exec();
   }
 
+  async findCustomerById(id: string): Promise<User> {
+    const customer = await this.userModel
+      .findOne({ _id: id, role: 'customer' })
+      .exec();
+    if (!customer) {
+      throw new NotFoundException(`Customer with id ${id} not found`);
+    }
+    return customer;
+  }
+
+  async findServiceProviderById(id: string): Promise<User> {
+    const serviceProvider = await this.userModel
+      .findOne({ _id: id, role: 'service_provider' })
+      .exec();
+    if (!serviceProvider) {
+      throw new NotFoundException(`Service provider with id ${id} not found`);
+    }
+    return serviceProvider;
+  }
+
   async createCustomer(createCustomerDto: CreateCustomerDto): Promise<User> {
     const createdCustomer = new this.userModel({
       ...createCustomerDto,

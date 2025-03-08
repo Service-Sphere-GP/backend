@@ -6,6 +6,7 @@ import {
   ApiResponse,
   ApiConsumes,
   ApiBody,
+  ApiParam,
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { User } from './schemas/user.schema';
@@ -20,6 +21,16 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'List of customers' })
   async getCustomers(): Promise<any> {
     return this.usersService.findAllCustomers();
+  }
+
+  @Get('customers/:id')
+  @ApiTags('Customers')
+  @ApiOperation({ summary: 'Retrieve a customer by ID' })
+  @ApiParam({ name: 'id', description: 'Customer ID' })
+  @ApiResponse({ status: 200, description: 'The customer' })
+  @ApiResponse({ status: 404, description: 'Customer not found' })
+  async getCustomerById(@Param('id') id: string): Promise<any> {
+    return this.usersService.findCustomerById(id);
   }
 
   // the create customer endpoint is in the auth controller
@@ -63,6 +74,16 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'List of service providers' })
   async getServiceProviders(): Promise<any> {
     return this.usersService.findAllServiceProviders();
+  }
+
+  @Get('service-providers/:id')
+  @ApiTags('Service Providers')
+  @ApiOperation({ summary: 'Retrieve a service provider by ID' })
+  @ApiParam({ name: 'id', description: 'Service Provider ID' })
+  @ApiResponse({ status: 200, description: 'The service provider' })
+  @ApiResponse({ status: 404, description: 'Service provider not found' })
+  async getServiceProviderById(@Param('id') id: string): Promise<any> {
+    return this.usersService.findServiceProviderById(id);
   }
 
   @Patch('service-providers/:id')
