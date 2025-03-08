@@ -59,6 +59,11 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   app.useGlobalFilters(new JsendExceptionFilter(configService));
   app.useGlobalInterceptors(new JsendResponseInterceptor());
-  await app.listen(3000);
+
+  // Use the PORT environment variable provided by Heroku
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
+
+  console.log(`Application is running on: ${await app.getUrl()}`);
 }
 bootstrap();
