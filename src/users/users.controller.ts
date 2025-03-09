@@ -33,6 +33,34 @@ export class UsersController {
     return this.usersService.findCustomerById(id);
   }
 
+  @Get('service-providers')
+  @ApiTags('Service Providers')
+  @ApiOperation({ summary: 'Retrieve all service providers' })
+  @ApiResponse({ status: 200, description: 'List of service providers' })
+  async getServiceProviders(): Promise<any> {
+    return this.usersService.findAllServiceProviders();
+  }
+
+  @Get('service-providers/:id')
+  @ApiTags('Service Providers')
+  @ApiOperation({ summary: 'Retrieve a service provider by ID' })
+  @ApiParam({ name: 'id', description: 'Service Provider ID' })
+  @ApiResponse({ status: 200, description: 'The service provider' })
+  @ApiResponse({ status: 404, description: 'Service provider not found' })
+  async getServiceProviderById(@Param('id') id: string): Promise<any> {
+    return this.usersService.findServiceProviderById(id);
+  }
+
+  @Get(':id')
+  @ApiTags('Users')
+  @ApiOperation({ summary: 'Retrieve a user by ID regardless of role' })
+  @ApiParam({ name: 'id', description: 'User ID' })
+  @ApiResponse({ status: 200, description: 'The user' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async getUserById(@Param('id') id: string): Promise<any> {
+    return this.usersService.findById(id);
+  }
+
   // the create customer endpoint is in the auth controller
 
   @Patch('customers/:id')
@@ -66,24 +94,6 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'The deleted customer' })
   async deleteCustomer(@Param('id') id: string) {
     return this.usersService.deleteCustomer(id);
-  }
-
-  @Get('service-providers')
-  @ApiTags('Service Providers')
-  @ApiOperation({ summary: 'Retrieve all service providers' })
-  @ApiResponse({ status: 200, description: 'List of service providers' })
-  async getServiceProviders(): Promise<any> {
-    return this.usersService.findAllServiceProviders();
-  }
-
-  @Get('service-providers/:id')
-  @ApiTags('Service Providers')
-  @ApiOperation({ summary: 'Retrieve a service provider by ID' })
-  @ApiParam({ name: 'id', description: 'Service Provider ID' })
-  @ApiResponse({ status: 200, description: 'The service provider' })
-  @ApiResponse({ status: 404, description: 'Service provider not found' })
-  async getServiceProviderById(@Param('id') id: string): Promise<any> {
-    return this.usersService.findServiceProviderById(id);
   }
 
   @Patch('service-providers/:id')
