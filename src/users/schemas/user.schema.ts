@@ -53,13 +53,23 @@ export const UserSchema = SchemaFactory.createForClass(User);
 
 UserSchema.pre<User>('save', async function (next) {
   if (this.isModified('password')) {
-    if (this.password !== this.confirm_password) {
+    if (
+      this.confirm_password !== undefined &&
+      this.password !== this.confirm_password
+    ) {
       throw new Error('Passwords do not match');
     }
 
-    this.password = await bcrypt.hash(this.password, 10);
+    if (!this.password.startsWith('$2b$')) {
+      this.password = await bcrypt.hash(this.password, 10);
+    }
+
     this.confirm_password = undefined;
   }
-  this.full_name = `${this.first_name} ${this.last_name}`;
+
+  if (this.first_name && this.last_name) {
+    this.full_name = `${this.first_name} ${this.last_name}`;
+  }
+
   next();
 });

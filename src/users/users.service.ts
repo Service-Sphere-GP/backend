@@ -4,6 +4,7 @@ import * as bcrypt from 'bcrypt';
 import { Model } from 'mongoose';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { CreateServiceProviderDto } from './dto/create-service-provider.dto';
+import { CreateAdminDto } from './dto/create-admin.dto';
 import { User } from './schemas/user.schema';
 import { ServicesService } from '../services/services.service';
 
@@ -107,6 +108,69 @@ export class UsersService {
       await this.servicesService.deleteService(service._id);
     }
 
+    return this.userModel.findByIdAndDelete(id).exec();
+  }
+
+  async createAdmin(createAdminDto: CreateAdminDto): Promise<User> {
+    try {
+      // Set default permissions if not provided
+      if (!createAdminDto.permissions) {
+        createAdminDto.permissions = [];
+      }
+
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(createAdminDto.password, 10);
+
+      // Create admin without using the pre-save hook for password validation
+      const adminData = {
+        first_name: createAdminDto.first_name,
+        last_name: createAdminDto.last_name,
+        email: createAdminDto.email,
+        password: hashedPassword, // Already hashed
+        full_name: `${createAdminDto.first_name} ${createAdminDto.last_name}`,
+        role: 'admin',
+        permissions: createAdminDto.permissions,
+      };
+
+      console.log('Attempting to save admin user to database');
+
+      // Create the admin user directly
+      const createdAdmin = new this.userModel(adminData);
+
+      // Save without triggering password validation
+      const savedAdmin = await createdAdmin.save({ validateBeforeSave: false });
+
+      console.log('Admin user saved successfully with ID:', savedAdmin.id);
+
+      return savedAdmin;
+    } catch (error) {
+      console.error('Error in createAdmin method:', error);
+      throw error; // Re-throw to be caught by the calling method
+    }
+  }
+
+  async findAllAdmins(): Promise<User[] | null> {
+    return this.userModel.find({ role: 'admin' }).exec();
+  }
+
+  async findAdminById(id: string): Promise<User> {
+    const admin = await this.userModel
+      .findOne({ _id: id, role: 'admin' })
+      .exec();
+    if (!admin) {
+      throw new NotFoundException(`Admin with id ${id} not found`);
+    }
+    return admin;
+  }
+
+  async updateAdmin(id: string, updateData: Partial<User>) {
+    updateData.full_name = `${updateData.first_name} ${updateData.last_name}`;
+    return this.userModel
+      .findByIdAndUpdate(id, updateData, { new: true })
+      .exec();
+  }
+
+  async deleteAdmin(id: string) {
     return this.userModel.findByIdAndDelete(id).exec();
   }
 }

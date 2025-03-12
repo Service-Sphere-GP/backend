@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -19,6 +20,8 @@ import { OtpService } from './otp.service';
 import { User } from './../users/schemas/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { CreateAdminDto } from '../users/dto/create-admin.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
@@ -30,6 +33,7 @@ export class AuthService {
     private mailService: MailService,
     private otpService: OtpService,
     @InjectModel(User.name) private userModel: Model<User>,
+    private configService: ConfigService,
   ) {}
 
   async registerCustomer(createCustomerDto: CreateCustomerDto) {
@@ -280,5 +284,101 @@ export class AuthService {
     }
 
     return { message: 'Verification email resent successfully' };
+  }
+
+  async registerFirstAdmin(createAdminDto: CreateAdminDto) {
+    // Check if any admin users already exist
+    try {
+      const existingAdmins = await this.usersService.findAllAdmins();
+
+      if (existingAdmins && existingAdmins.length > 0) {
+        throw new ForbiddenException(
+          'Admin users already exist. This endpoint can only be used when no admin users exist.',
+        );
+      }
+
+      // Check if email already exists
+      const existingUser = await this.usersService.findByEmail(
+        createAdminDto.email,
+      );
+      if (existingUser) {
+        throw new BadRequestException('Email already exists');
+      }
+
+      console.log(
+        'Creating admin with data:',
+        JSON.stringify(createAdminDto, null, 2),
+      );
+
+      const adminData = {
+        ...createAdminDto,
+        role: 'admin',
+      };
+
+      const admin = await this.usersService.createAdmin(adminData);
+      console.log('Admin created successfully:', admin.id);
+
+      // Generate JWT token for the new admin
+      const payload: JwtPayload = {
+        sub: admin.id,
+        email: admin.email,
+        role: 'admin',
+      };
+
+      const accessToken = this.jwtService.sign(payload);
+
+      return {
+        user: admin,
+        access_token: accessToken,
+      };
+    } catch (error) {
+      console.error('Failed to create admin user. Error details:', error);
+
+      // Provide more specific error messages based on the error type
+      if (error.name === 'ValidationError') {
+        throw new BadRequestException(`Validation error: ${error.message}`);
+      } else if (error.code === 11000) {
+        throw new BadRequestException(
+          'Duplicate key error: Email already exists',
+        );
+      } else {
+        throw new BadRequestException(
+          `Failed to create admin user: ${error.message || 'Unknown error'}`,
+        );
+      }
+    }
+  }
+
+  async registerAdmin(apiKey: string, createAdminDto: CreateAdminDto) {
+    // Validate API key
+    const validApiKey = this.configService.get<string>('ADMIN_API_KEY');
+
+    if (!apiKey || apiKey !== validApiKey) {
+      throw new ForbiddenException('Invalid or missing API key');
+    }
+
+    // Check if email already exists
+    const existingUser = await this.usersService.findByEmail(
+      createAdminDto.email,
+    );
+    if (existingUser) {
+      throw new BadRequestException('Email already exists');
+    }
+
+    try {
+      const adminData = {
+        ...createAdminDto,
+        role: 'admin',
+      };
+
+      const admin = await this.usersService.createAdmin(adminData);
+
+      return {
+        message: 'Admin user created successfully',
+        user: admin,
+      };
+    } catch (error) {
+      throw new BadRequestException('Failed to create admin user');
+    }
   }
 }

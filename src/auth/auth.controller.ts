@@ -28,6 +28,7 @@ import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { BlacklistedJwtAuthGuard } from './guards/blacklisted-jwt-auth.guard';
 import { CurrentUser } from './../common/decorators/current-user.decorator';
 import { OtpService } from './otp.service';
+import { CreateAdminDto } from '../users/dto/create-admin.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -138,5 +139,76 @@ export class AuthController {
     @Body() resendVerificationDto: ResendVerificationDto,
   ) {
     return this.authService.resendVerificationOtp(resendVerificationDto.email);
+  }
+
+  @Post('register/first-admin')
+  @ApiOperation({
+    summary: 'Register the first admin user (works only when no admins exist)',
+    description:
+      'This endpoint allows creating the very first admin user in the system. It only works when there are no existing admin users. After the first admin is created, this endpoint will return a 403 error.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'First admin registered successfully.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Admin users already exist.',
+  })
+  @ApiBody({
+    type: CreateAdminDto,
+    examples: {
+      createFirstAdminExample: {
+        summary: 'Example JSON payload',
+        value: {
+          first_name: 'Admin',
+          last_name: 'User',
+          email: 'admin@example.com',
+          password: 'securePassword123',
+          confirm_password: 'securePassword123',
+          permissions: ['manage_users', 'manage_services', 'manage_all'],
+        },
+      },
+    },
+  })
+  async registerFirstAdmin(@Body() createAdminDto: CreateAdminDto) {
+    return this.authService.registerFirstAdmin(createAdminDto);
+  }
+
+  @Post('register/admin')
+  @ApiOperation({
+    summary: 'Register an admin user using API key authentication',
+    description:
+      'This endpoint allows creating additional admin users. It requires a valid API key to be provided in the x-api-key header. The API key should be set in the ADMIN_API_KEY environment variable.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Admin registered successfully.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Invalid or missing API key.',
+  })
+  @ApiBody({
+    type: CreateAdminDto,
+    examples: {
+      createAdminExample: {
+        summary: 'Example JSON payload',
+        value: {
+          first_name: 'Another',
+          last_name: 'Admin',
+          email: 'another.admin@example.com',
+          password: 'securePassword456',
+          confirm_password: 'securePassword456',
+          permissions: ['manage_users', 'manage_services'],
+        },
+      },
+    },
+  })
+  async registerAdmin(
+    @Headers('x-api-key') apiKey: string,
+    @Body() createAdminDto: CreateAdminDto,
+  ) {
+    return this.authService.registerAdmin(apiKey, createAdminDto);
   }
 }
