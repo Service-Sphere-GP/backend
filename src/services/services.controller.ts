@@ -25,12 +25,10 @@ import { CreateServiceDto } from './dto/create-service.dto';
 import { ServiceInterface } from './interfaces/service.interface';
 import { FilesInterceptor } from '@nestjs/platform-express';
 
-
 import { Roles } from './../common/decorators/roles.decorators';
 import { RolesGuard } from './../auth/guards/roles.guard';
 
 import { BlacklistedJwtAuthGuard } from './..//auth/guards/blacklisted-jwt-auth.guard';
-
 
 @ApiTags('Services')
 @Controller('services')
@@ -45,6 +43,18 @@ export class ServicesController {
     return this.servicesService.getAllServices();
   }
 
+  @Get(':id')
+  @ApiOperation({ summary: 'Retrieve a service by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'The service with the specified ID',
+    type: ServiceDto,
+  })
+  @ApiResponse({ status: 404, description: 'Service not found' })
+  async getServiceById(@Param('id') id: string): Promise<ServiceInterface> {
+    return this.servicesService.getServiceById(id);
+  }
+
   @Post()
   @UseInterceptors(FilesInterceptor('images'))
   @ApiConsumes('multipart/form-data')
@@ -56,7 +66,7 @@ export class ServicesController {
   })
   @ApiBearerAuth('access-token')
   @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
-  @Roles('admin','service_provider')
+  @Roles('admin', 'service_provider')
   async createService(
     @Body() createServiceDto: CreateServiceDto,
     @UploadedFiles() files: Express.Multer.File[],
@@ -76,7 +86,7 @@ export class ServicesController {
   })
   @ApiBearerAuth('access-token')
   @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
-  @Roles('admin','service_provider')
+  @Roles('admin', 'service_provider')
   @Delete(':id')
   async deleteService(@Param('id') id: string): Promise<ServiceInterface> {
     return this.servicesService.deleteService(id);
@@ -86,7 +96,7 @@ export class ServicesController {
   @ApiConsumes('multipart/form-data')
   @ApiBearerAuth('access-token')
   @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
-  @Roles('admin','service_provider')
+  @Roles('admin', 'service_provider')
   @UseInterceptors(FilesInterceptor('images'))
   async updateService(
     @Param('id') id: string,
