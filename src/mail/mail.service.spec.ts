@@ -48,11 +48,13 @@ describe('MailService', () => {
       expect(mailerService.sendMail).toHaveBeenCalledWith({
         to: email,
         subject: 'Welcome to Service Sphere! Confirm Your Email',
-        template: 'welcome',
+        template: 'verification-email',
         context: expect.objectContaining({
           name,
           otp,
-          verificationLink: `http://localhost:3000/api/v1/auth/verify-email/${otp}`,
+          title: 'Welcome to Service Sphere!',
+          message:
+            'Thank you for joining Service Sphere. Please use the following code to verify your email address:',
         }),
       });
     });
@@ -89,7 +91,7 @@ describe('MailService', () => {
         context: expect.objectContaining({
           name,
           token,
-          resetLink: `http://localhost:3000/api/v1/auth/reset-password/${token}`,
+          url: `http://localhost:3000/api/v1/auth/reset-password/${token}`,
         }),
       });
     });

@@ -11,6 +11,7 @@ import { OtpService } from './otp.service';
 import { UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { User } from './../users/schemas/user.schema';
+import { ConfigService } from '@nestjs/config';
 
 describe('AuthService', () => {
   let authService: AuthService;
@@ -21,6 +22,7 @@ describe('AuthService', () => {
   let mailService: Partial<MailService>;
   let otpService: Partial<OtpService>;
   let userModel: any;
+  let configService: Partial<ConfigService>;
 
   beforeEach(async () => {
     usersService = {
@@ -65,6 +67,15 @@ describe('AuthService', () => {
       findById: jest.fn().mockResolvedValue({}),
     };
 
+    configService = {
+      get: jest.fn().mockImplementation((key: string) => {
+        if (key === 'JWT_SECRET') return 'test-secret';
+        if (key === 'JWT_EXPIRATION') return '1h';
+        if (key === 'API_KEY') return 'test-api-key';
+        return null;
+      }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -78,6 +89,7 @@ describe('AuthService', () => {
         { provide: MailService, useValue: mailService },
         { provide: OtpService, useValue: otpService },
         { provide: getModelToken(User.name), useValue: userModel },
+        { provide: ConfigService, useValue: configService },
       ],
     }).compile();
 
