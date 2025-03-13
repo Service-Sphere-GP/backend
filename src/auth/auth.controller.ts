@@ -44,6 +44,10 @@ export class AuthController {
     status: 201,
     description: 'Customer registered successfully.',
   })
+  @ApiResponse({
+    status: 400,
+    description: 'Email already exist',
+  })
   async registerCustomer(@Body() createCustomerDto: CreateCustomerDto) {
     return this.authService.registerCustomer(createCustomerDto);
   }
@@ -54,6 +58,24 @@ export class AuthController {
     status: 201,
     description: 'Service provider registered successfully.',
   })
+  @ApiBody({
+    type: CreateServiceProviderDto,
+    examples: {
+      serviceProviderExample: {
+        summary: 'Service Provider Registration Example',
+        value: {
+          email: 'service_provider@gmail.com',
+          password: 'pass1234',
+          confirm_password: 'pass1234',
+          first_name: 'hussein',
+          last_name: 'Saad',
+          business_name: 'Acme Corp.',
+          business_address: '123 Main St, City, Country',
+          tax_id: 'TAX1234567',
+        },
+      },
+    },
+  })
   async registerServiceProvider(
     @Body() createServiceProviderDto: CreateServiceProviderDto,
   ) {
@@ -63,6 +85,32 @@ export class AuthController {
   @Post('login')
   @ApiOperation({ summary: 'Login user' })
   @ApiResponse({ status: 200, description: 'User logged in successfully.' })
+  @ApiBody({
+    type: LoginDto,
+    examples: {
+      adminLogin: {
+        summary: 'Admin Login Example',
+        value: {
+          email: 'hh1681@fayoum.edu.eg',
+          password: 'testbest',
+        },
+      },
+      customerLogin: {
+        summary: 'Customer Login Example',
+        value: {
+          email: 'customer@gmail.com',
+          password: 'pass1234',
+        },
+      },
+      serviceProviderLogin: {
+        summary: 'Service Provider Login Example',
+        value: {
+          email: 'service_provider@gmail.com',
+          password: 'pass1234',
+        },
+      },
+    },
+  })
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
   }

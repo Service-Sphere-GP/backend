@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -79,5 +80,29 @@ export class TicketsService {
       console.error('Error updating ticket status:', error);
       throw new BadRequestException(error.message);
     }
+  }
+
+  async updateStatus(
+    ticketId: string,
+    updateDto: { status: string },
+    user: any,
+  ): Promise<Ticket> {
+    const ticket = await this.ticketModel.findById(ticketId);
+    if (!ticket) {
+      throw new NotFoundException('Ticket not found');
+    }
+
+    // Check if user is authorized to update the ticket
+    if (
+      user.role !== 'admin' &&
+      (!ticket.createdBy || user._id.toString() !== ticket.createdBy.toString())
+    ) {
+      throw new ForbiddenException(
+        'You are not authorized to update this ticket',
+      );
+    }
+
+    ticket.status = updateDto.status;
+    return await ticket.save();
   }
 }

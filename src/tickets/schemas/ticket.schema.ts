@@ -38,6 +38,9 @@ export class Ticket {
     required: true,
   })
   assigned_to: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  createdBy: Types.ObjectId;
 }
 
 export const TicketSchema = SchemaFactory.createForClass(Ticket);
