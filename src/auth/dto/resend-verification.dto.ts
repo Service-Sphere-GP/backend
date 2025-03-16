@@ -4,7 +4,7 @@ import { IsEmail, IsNotEmpty } from 'class-validator';
 export class ResendVerificationDto {
   @ApiProperty({
     description: 'Email address of the user',
-    example: 'user@example.com',
+    example: 'customer@example.com',
   })
   @IsEmail({}, { message: 'Please provide a valid email address' })
   @IsNotEmpty({ message: 'Email is required' })

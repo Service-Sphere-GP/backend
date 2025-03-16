@@ -5,8 +5,7 @@ import { Document } from 'mongoose';
 
 export type ServiceProviderDocument = ServiceProvider & Document;
 
-
-@Schema()
+@Schema() // Removed the timestamps option here
 export class ServiceProvider extends User {
   @Prop()
   business_name: string;
@@ -32,13 +31,14 @@ export class ServiceProvider extends User {
   })
   rating_average: number;
 
-
   @Prop({ required: true })
   business_address: string;
 
   @Prop({ required: true })
   tax_id: string;
 
+  @Prop({ type: String, required: false })
+  profile_image?: string;
 }
 
 export const ServiceProviderSchema =

@@ -39,9 +39,40 @@ async function bootstrap() {
       },
       'access-token',
     )
+    .addTag('Authentication', 'User authentication and authorization endpoints')
+    .addTag('Users', 'User management endpoints')
+    .addTag('Services', 'Service management endpoints')
+    .addTag('Bookings', 'Service booking management endpoints')
+    .addTag('Feedback', 'User feedback management endpoints')
+    .addTag('Tickets', 'Support ticket management endpoints')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document);
+
+  // Add tag groups for better organization
+  const options = {
+    swaggerOptions: {
+      tagsSorter: 'alpha',
+      operationsSorter: 'alpha',
+      docExpansion: 'none',
+      persistAuthorization: true,
+      tagGroups: [
+        {
+          name: 'Authentication & User Management',
+          tags: ['Authentication', 'Users'],
+        },
+        {
+          name: 'Service Management',
+          tags: ['Services', 'Bookings'],
+        },
+        {
+          name: 'Customer Support',
+          tags: ['Feedback', 'Tickets'],
+        },
+      ],
+    },
+  };
+
+  SwaggerModule.setup('docs', app, document, options);
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true, // Automatically transform payloads to DTO instances
