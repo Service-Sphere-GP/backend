@@ -4,7 +4,7 @@ import { Document } from 'mongoose';
 
 import * as bcrypt from 'bcrypt';
 
-@Schema({ discriminatorKey: 'role' })
+@Schema({ discriminatorKey: 'role', timestamps: true })
 export class User extends Document {
   @Prop({ required: true })
   first_name: string;

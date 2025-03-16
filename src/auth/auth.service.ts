@@ -11,7 +11,8 @@ import { UsersService } from './../users/users.service';
 import { CreateCustomerDto } from './../users/dto/create-customer.dto';
 import { CreateServiceProviderDto } from './../users/dto/create-service-provider.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
-
+import { CloudinaryService } from 'nestjs-cloudinary';
+import { Express } from 'express';
 import * as crypto from 'crypto';
 import { PasswordResetTokensService } from './password-reset-token.service';
 import { TokenBlacklistService } from './token-blacklist.service';
@@ -34,9 +35,13 @@ export class AuthService {
     private otpService: OtpService,
     @InjectModel(User.name) private userModel: Model<User>,
     private configService: ConfigService,
+    private readonly cloudinary: CloudinaryService,
   ) {}
 
-  async registerCustomer(createCustomerDto: CreateCustomerDto) {
+  async registerCustomer(
+    createCustomerDto: CreateCustomerDto,
+    profileImage?: Express.Multer.File,
+  ) {
     const existingUser = await this.usersService.findByEmail(
       createCustomerDto.email,
     );
@@ -45,9 +50,16 @@ export class AuthService {
     }
 
     try {
+      let profileImageUrl = null;
+      if (profileImage) {
+        const uploadResult = await this.cloudinary.uploadFile(profileImage);
+        profileImageUrl = uploadResult.url;
+      }
+
       const customerData = {
         ...createCustomerDto,
         role: 'customer',
+        profile_image: profileImageUrl,
       };
       const customer = await this.usersService.createCustomer(customerData);
 
@@ -79,6 +91,7 @@ export class AuthService {
 
   async registerServiceProvider(
     createServiceProviderDto: CreateServiceProviderDto,
+    profileImage?: Express.Multer.File,
   ) {
     const existingUser = await this.usersService.findByEmail(
       createServiceProviderDto.email,
@@ -88,9 +101,16 @@ export class AuthService {
     }
 
     try {
+      let profileImageUrl = null;
+      if (profileImage) {
+        const uploadResult = await this.cloudinary.uploadFile(profileImage);
+        profileImageUrl = uploadResult.url;
+      }
+
       const serviceProviderData = {
         ...createServiceProviderDto,
         role: 'service_provider',
+        profile_image: profileImageUrl,
       };
       const serviceProvider =
         await this.usersService.createServiceProvider(serviceProviderData);
