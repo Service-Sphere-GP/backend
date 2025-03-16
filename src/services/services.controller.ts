@@ -45,7 +45,9 @@ export class ServicesController {
     description: 'List of services retrieved successfully',
     type: [ServiceDto],
   })
-  @UseGuards(BlacklistedJwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @Roles('admin', 'service_provider', 'customer')
   async getAllServices(): Promise<ServiceInterface[]> {
     return this.servicesService.getAllServices();
   }
@@ -61,6 +63,9 @@ export class ServicesController {
     type: ServiceDto,
   })
   @ApiResponse({ status: 404, description: 'Service not found' })
+  @ApiBearerAuth('access-token')
+  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @Roles('admin', 'service_provider', 'customer')
   async getServiceById(@Param('id') id: string): Promise<ServiceInterface> {
     return this.servicesService.getServiceById(id);
   }
