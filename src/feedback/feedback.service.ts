@@ -17,13 +17,20 @@ export class FeedbackService {
     const feedbackData: any = {
       rating: createFeedbackDto.rating,
       message: createFeedbackDto.message,
-      given_to_service: createFeedbackDto.given_to_service ?? null,
+      about_service:
+        createFeedbackDto.about_service ||
+        createFeedbackDto.given_to_service ||
+        null,
+      about_customer: createFeedbackDto.about_customer || null,
     };
+
+    // Assign the user ID based on their role
     if (user.role === 'customer') {
-      feedbackData.given_to_customer = user.user_id;
+      feedbackData.from_customer = user.user_id;
     } else if (user.role === 'service_provider') {
-      feedbackData.given_to_provider = user.user_id;
+      feedbackData.from_provider = user.user_id;
     }
+
     const newFeedback = await this.feedbackModel.create(feedbackData);
     return newFeedback;
   }
@@ -48,14 +55,17 @@ export class FeedbackService {
     }
 
     // check if the feedback belongs to the user
+    const fromCustomerId = feedback.from_customer?.toString();
+    const fromProviderId = feedback.from_provider?.toString();
+
     if (
-      feedback.given_to_customer.toString() !== current_user.user_id &&
-      feedback.given_to_provider.toString() !== current_user.user_id
+      fromCustomerId !== current_user.user_id &&
+      fromProviderId !== current_user.user_id
     ) {
       throw new NotFoundException(`Feedback with ID ${id} not found`);
     }
-    await this.feedbackModel.findByIdAndDelete(id).exec();
 
+    await this.feedbackModel.findByIdAndDelete(id).exec();
     return feedback;
   }
 }
