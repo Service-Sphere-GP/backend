@@ -8,8 +8,6 @@ import {
   Param,
   UseGuards,
   Patch,
-  UseInterceptors,
-  UploadedFile,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,9 +15,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiBody,
-  ApiConsumes,
 } from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthService } from './auth.service';
 import { CreateCustomerDto } from './../users/dto/create-customer.dto';
 import { CreateServiceProviderDto } from './../users/dto/create-service-provider.dto';
@@ -52,8 +48,6 @@ export class AuthController {
     status: 400,
     description: 'Email already exist',
   })
-  @ApiConsumes('multipart/form-data')
-  @UseInterceptors(FileInterceptor('profileImage'))
   @ApiBody({
     schema: {
       type: 'object',
@@ -63,19 +57,23 @@ export class AuthController {
         confirm_password: { type: 'string', example: 'pass1234' },
         first_name: { type: 'string', example: 'John' },
         last_name: { type: 'string', example: 'Doe' },
-        profileImage: {
-          type: 'string',
-          format: 'binary',
-          description: 'Profile image file',
+      },
+    },
+    examples: {
+      customerRegistration: {
+        summary: 'Customer Registration Example',
+        value: {
+          email: 'customer@example.com',
+          password: 'pass1234',
+          confirm_password: 'pass1234',
+          first_name: 'John',
+          last_name: 'Doe',
         },
       },
     },
   })
-  async registerCustomer(
-    @Body() createCustomerDto: CreateCustomerDto,
-    @UploadedFile() profileImage?: Express.Multer.File,
-  ) {
-    return this.authService.registerCustomer(createCustomerDto, profileImage);
+  async registerCustomer(@Body() createCustomerDto: CreateCustomerDto) {
+    return this.authService.registerCustomer(createCustomerDto);
   }
 
   @Post('register/service-provider')
@@ -84,8 +82,6 @@ export class AuthController {
     status: 201,
     description: 'Service provider registered successfully.',
   })
-  @ApiConsumes('multipart/form-data')
-  @UseInterceptors(FileInterceptor('profileImage'))
   @ApiBody({
     schema: {
       type: 'object',
@@ -101,22 +97,28 @@ export class AuthController {
           example: '123 Main St, City, Country',
         },
         tax_id: { type: 'string', example: 'TAX1234567' },
-        profileImage: {
-          type: 'string',
-          format: 'binary',
-          description: 'Profile image file',
+      },
+    },
+    examples: {
+      serviceProviderRegistration: {
+        summary: 'Service Provider Registration Example',
+        value: {
+          email: 'service_provider@gmail.com',
+          password: 'pass1234',
+          confirm_password: 'pass1234',
+          first_name: 'Hussein',
+          last_name: 'Saad',
+          business_name: 'Acme Corp.',
+          business_address: '123 Main St, City, Country',
+          tax_id: 'TAX1234567',
         },
       },
     },
   })
   async registerServiceProvider(
     @Body() createServiceProviderDto: CreateServiceProviderDto,
-    @UploadedFile() profileImage?: Express.Multer.File,
   ) {
-    return this.authService.registerServiceProvider(
-      createServiceProviderDto,
-      profileImage,
-    );
+    return this.authService.registerServiceProvider(createServiceProviderDto);
   }
 
   @Post('login')

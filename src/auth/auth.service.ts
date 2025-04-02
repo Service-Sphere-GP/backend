@@ -26,6 +26,10 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
+  // Default profile image URL to be assigned to all new users
+  private readonly DEFAULT_PROFILE_IMAGE =
+    'https://res.cloudinary.com/ein39/image/upload/v1743629482/ServiceSphere/vryf9jmnqabuoo1c1aab.webp';
+
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
@@ -38,10 +42,7 @@ export class AuthService {
     private readonly cloudinary: CloudinaryService,
   ) {}
 
-  async registerCustomer(
-    createCustomerDto: CreateCustomerDto,
-    profileImage?: Express.Multer.File,
-  ) {
+  async registerCustomer(createCustomerDto: CreateCustomerDto) {
     const existingUser = await this.usersService.findByEmail(
       createCustomerDto.email,
     );
@@ -50,16 +51,10 @@ export class AuthService {
     }
 
     try {
-      let profileImageUrl = null;
-      if (profileImage) {
-        const uploadResult = await this.cloudinary.uploadFile(profileImage);
-        profileImageUrl = uploadResult.url;
-      }
-
       const customerData = {
         ...createCustomerDto,
         role: 'customer',
-        profile_image: profileImageUrl,
+        profile_image: this.DEFAULT_PROFILE_IMAGE,
       };
       const customer = await this.usersService.createCustomer(customerData);
 
@@ -91,7 +86,6 @@ export class AuthService {
 
   async registerServiceProvider(
     createServiceProviderDto: CreateServiceProviderDto,
-    profileImage?: Express.Multer.File,
   ) {
     const existingUser = await this.usersService.findByEmail(
       createServiceProviderDto.email,
@@ -101,16 +95,10 @@ export class AuthService {
     }
 
     try {
-      let profileImageUrl = null;
-      if (profileImage) {
-        const uploadResult = await this.cloudinary.uploadFile(profileImage);
-        profileImageUrl = uploadResult.url;
-      }
-
       const serviceProviderData = {
         ...createServiceProviderDto,
         role: 'service_provider',
-        profile_image: profileImageUrl,
+        profile_image: this.DEFAULT_PROFILE_IMAGE,
       };
       const serviceProvider =
         await this.usersService.createServiceProvider(serviceProviderData);
