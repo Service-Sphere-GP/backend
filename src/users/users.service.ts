@@ -92,10 +92,36 @@ export class UsersService {
   }
 
   async updateServiceProvider(id: string, updateData: Partial<User>) {
-    updateData.full_name = `${updateData.first_name} ${updateData.last_name}`;
-    return this.userModel
-      .findByIdAndUpdate(id, updateData, { new: true })
-      .exec();
+
+    // Find the current service provider first
+    const serviceProvider = await this.userModel.findById(id).exec();
+    if (!serviceProvider) {
+      throw new NotFoundException(`Service provider with id ${id} not found`);
+    }
+
+    // Only set full_name if first_name or last_name is being updated
+    if (updateData.first_name || updateData.last_name) {
+      const firstName = updateData.first_name || serviceProvider.first_name;
+      const lastName = updateData.last_name || serviceProvider.last_name;
+      updateData.full_name = `${firstName} ${lastName}`;
+    }
+
+
+    // Instead of using findByIdAndUpdate, update the document directly and save it
+    try {
+      // Apply updates to the document
+      Object.keys(updateData).forEach((key) => {
+        serviceProvider[key] = updateData[key];
+      });
+
+      // Save the updated document
+      const savedServiceProvider = await serviceProvider.save();
+
+
+      return savedServiceProvider;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async deleteServiceProvider(id: string) {

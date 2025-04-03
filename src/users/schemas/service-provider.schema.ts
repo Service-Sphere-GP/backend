@@ -15,7 +15,7 @@ export class ServiceProvider extends User {
 
   @Prop({
     type: String,
-    enum: ['pending', 'verified', 'suspended', 'rejected'],
+    enum: ['pending', 'approved', 'suspended', 'rejected'],
     default: 'pending',
   })
   verification_status: string;
