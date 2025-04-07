@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Get,
   Param,
   UseGuards,
   NotFoundException,
@@ -68,6 +69,27 @@ export class BookingsController {
         serviceId,
         customer.user_id,
       );
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  @Get()
+  @ApiOperation({
+    summary: 'Get all bookings for customer',
+    description: 'Retrieves all bookings made by the authenticated customer.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of bookings retrieved successfully',
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden - Not a customer' })
+  @ApiBearerAuth('access-token')
+  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @Roles('admin','customer')
+  async getCustomerBookings(@CurrentUser() customer: any) {
+    try {
+      return await this.bookingService.getCustomerBookings(customer.user_id);
     } catch (error) {
       throw new BadRequestException(error.message);
     }

@@ -62,6 +62,7 @@ export class BookingsService {
           booking_id: savedBooking._id,
           status: 'open',
           assigned_to: provider._id,
+          createdBy: new Types.ObjectId(customerId),  
         };
 
         await this.ticketModel.create(ticketData);
@@ -88,6 +89,29 @@ export class BookingsService {
       }
       console.error('Booking creation error:', error);
       throw new InternalServerErrorException('An unexpected error occurred');
+    }
+  }
+
+  async getCustomerBookings(customerId: string): Promise<ServiceBookings[]> {
+    try {
+      if (!Types.ObjectId.isValid(customerId)) {
+        throw new BadRequestException('Invalid customer ID format');
+      }
+
+      const bookings = await this.bookingModel.find({
+        customer_id: customerId,
+      })
+      .populate('service_id')
+      .populate('ticket_id')
+      .exec();
+
+      return bookings;
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      console.error('Fetching customer bookings error:', error);
+      throw new InternalServerErrorException('Failed to retrieve bookings');
     }
   }
 }
