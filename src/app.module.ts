@@ -13,6 +13,7 @@ import { ServiceBookingsModule } from './service-bookings/service-bookings.modul
 import { Feedback } from './feedback/schemas/feedback.schema';
 import { FeedbackModule } from './feedback/feedback.module';
 import { TicketsModule } from './tickets/tickets.module';
+import { AdviceModule } from './advice/advice.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { TicketsModule } from './tickets/tickets.module';
     ServiceBookingsModule,
     FeedbackModule,
     TicketsModule,
+    AdviceModule,
   ],
   controllers: [AppController],
   providers: [AppService],
