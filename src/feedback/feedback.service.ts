@@ -68,4 +68,16 @@ export class FeedbackService {
     await this.feedbackModel.findByIdAndDelete(id).exec();
     return feedback;
   }
+
+  async getAllFeedbackByServiceId(serviceId: string): Promise<Feedback[]> {
+    const feedback = await this.feedbackModel
+      .find({ about_service: serviceId })
+      .exec();
+    if (!feedback) {
+      throw new NotFoundException(
+        `Feedback for service ID ${serviceId} not found`,
+      );
+    }
+    return feedback;
+  }
 }
