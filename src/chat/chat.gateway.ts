@@ -45,7 +45,6 @@ export class ChatGateway
   }
 
   async handleConnection(client: Socket, ...args: any[]) {
-
     try {
       const canActivate = await this.wsJwtGuard.canActivate({
         switchToWs: () => ({ getClient: () => client }),
@@ -68,4 +67,67 @@ export class ChatGateway
     this.logger.log(`Client disconnected: ${client.id}`);
   }
 
+  @SubscribeMessage('test')
+  handleTest(client: Socket, payload: any): void {
+    this.logger.log(
+      `Test message received from client ${client.id}: ${payload}`,
+    );
+    client.emit('testResponse', { message: 'Test response' });
+  }
+
+  @UseGuards(WsJwtGuard)
+  @SubscribeMessage('joinRoom')
+  async handleJoinRoom(
+    @MessageBody() payload: JoinRoomDto,
+    @ConnectedSocket() client: Socket,
+  ): Promise<void> {
+    const userId = client.data.user.userId;
+    const { bookingId } = payload;
+    this.logger.log(
+      `User ${userId} attempting to join room for booking ${bookingId}`,
+    );
+
+    try {
+      await this.chatService.validateUserAccess(userId, bookingId);
+      const roomName = `booking_${bookingId}`;
+      client.join(roomName);
+      this.logger.log(`User ${userId} joined room: ${roomName}`);
+
+      const history = await this.chatService.getChatHistory(userId, bookingId);
+      client.emit('chatHistory', history);
+    } catch (error) {
+      this.logger.error(
+        `Failed to join room ${bookingId} for user ${userId}: ${error.message}`,
+      );
+      client.emit('error', `Failed to join room: ${error.message}`);
+    }
+  }
+
+  @UseGuards(WsJwtGuard)
+  @SubscribeMessage('sendMessage')
+  async handleMessage(
+    @MessageBody() payload: CreateMessageDto,
+    @ConnectedSocket() client: Socket,
+  ): Promise<void> {
+    const senderId = client.data.user.userId;
+    const { bookingId, content } = payload;
+    this.logger.log(`User ${senderId} sending message to booking ${bookingId}`);
+
+    try {
+      const savedMessage = await this.chatService.createMessage(
+        senderId,
+        bookingId,
+        content,
+      );
+
+      const roomName = `booking_${bookingId}`;
+      this.server.to(roomName).emit('receiveMessage', savedMessage);
+      this.logger.log(`Message sent to room ${roomName}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to send message for booking ${bookingId} by user ${senderId}: ${error.message}`,
+      );
+      client.emit('error', `Failed to send message: ${error.message}`);
+    }
+  }
 }
