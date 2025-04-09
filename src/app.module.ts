@@ -9,8 +9,10 @@ import { UserModule } from './users/user.module';
 import { ServicesModule } from './services/services.module';
 import { CloudinaryModule } from 'nestjs-cloudinary';
 import { AuthModule } from './auth/auth.module';
-import { ServiceBookingsModule } from './service-bookings/service-bookings.module'
+import { ServiceBookingsModule } from './service-bookings/service-bookings.module';
+import { Feedback } from './feedback/schemas/feedback.schema';
 import { FeedbackModule } from './feedback/feedback.module';
+import { TicketsModule } from './tickets/tickets.module';
 import { AdviceModule } from './advice/advice.module';
 
 @Module({
@@ -40,6 +42,7 @@ import { AdviceModule } from './advice/advice.module';
     AuthModule,
     ServiceBookingsModule,
     FeedbackModule,
+    TicketsModule,
     AdviceModule,
   ],
   controllers: [AppController],
