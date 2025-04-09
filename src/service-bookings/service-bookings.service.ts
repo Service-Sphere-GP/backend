@@ -8,14 +8,12 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ServiceBookings } from './schemas/service-booking.schema';
 import { ServicesService } from '../services/services.service';
-import { Ticket } from '../tickets/schemas/ticket.schema';
 import { UsersService } from './../users/users.service';
 @Injectable()
 export class BookingsService {
   constructor(
     @InjectModel(ServiceBookings.name)
     private bookingModel: Model<ServiceBookings>,
-    @InjectModel(Ticket.name) private ticketModel: Model<Ticket>,
     private readonly servicesService: ServicesService,
     private readonly UsersService: UsersService,
   ) {}
@@ -56,16 +54,6 @@ export class BookingsService {
         });
 
         const savedBooking = await booking.save();
-
-        const ticketData = {
-          _id: ticketId,
-          booking_id: savedBooking._id,
-          status: 'open',
-          assigned_to: provider._id,
-          createdBy: new Types.ObjectId(customerId),  
-        };
-
-        await this.ticketModel.create(ticketData);
 
         return savedBooking;
       } catch (dbError) {
