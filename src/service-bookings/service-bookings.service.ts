@@ -22,14 +22,14 @@ export class BookingsService {
     serviceId: string,
     customerId: string,
   ): Promise<ServiceBookings> {
-    try {
-      if (!Types.ObjectId.isValid(serviceId)) {
-        throw new BadRequestException('Invalid service ID format');
-      }
-      if (!Types.ObjectId.isValid(customerId)) {
-        throw new BadRequestException('Invalid customer ID format');
-      }
+    if (!Types.ObjectId.isValid(serviceId)) {
+      throw new BadRequestException('Invalid service ID format');
+    }
+    if (!Types.ObjectId.isValid(customerId)) {
+      throw new BadRequestException('Invalid customer ID format');
+    }
 
+    try {
       const service = await this.servicesService.getServiceById(serviceId);
       if (!service) {
         throw new NotFoundException('Service not found');
@@ -38,45 +38,35 @@ export class BookingsService {
       const provider = await this.UsersService.findById(
         service.service_provider_id.toString(),
       );
-
       if (!provider) {
         throw new NotFoundException('Service provider not available');
       }
 
-      const ticketId = new Types.ObjectId();
+      const booking = new this.bookingModel({
+        customer_id: customerId,
+        service_id: serviceId,
+        status: 'pending',
+      });
 
-      try {
-        const booking = new this.bookingModel({
-          customer_id: customerId,
-          service_id: serviceId,
-          status: 'pending',
-          ticket_id: ticketId,
-        });
-
-        const savedBooking = await booking.save();
-
-        return savedBooking;
-      } catch (dbError) {
-        if (dbError.name === 'ValidationError') {
-          throw new BadRequestException(
-            `Validation failed: ${dbError.message}`,
-          );
-        }
-        if (dbError.code === 11000) {
-          throw new BadRequestException('Booking already exists');
-        }
-        throw new InternalServerErrorException('Failed to create booking');
-      }
+      const savedBooking = await booking.save();
+      return savedBooking;
     } catch (error) {
       if (
         error instanceof BadRequestException ||
-        error instanceof NotFoundException ||
-        error instanceof InternalServerErrorException
+        error instanceof NotFoundException
       ) {
         throw error;
       }
+
+      if (error.name === 'ValidationError') {
+        throw new BadRequestException(`Validation failed: ${error.message}`);
+      }
+      if (error.code === 11000) {
+        throw new BadRequestException('Booking already exists');
+      }
+
       console.error('Booking creation error:', error);
-      throw new InternalServerErrorException('An unexpected error occurred');
+      throw new InternalServerErrorException('Failed to create booking');
     }
   }
 
@@ -86,12 +76,12 @@ export class BookingsService {
         throw new BadRequestException('Invalid customer ID format');
       }
 
-      const bookings = await this.bookingModel.find({
-        customer_id: customerId,
-      })
-      .populate('service_id')
-      .populate('ticket_id')
-      .exec();
+      const bookings = await this.bookingModel
+        .find({
+          customer_id: customerId,
+        })
+        .populate('service_id')
+        .exec();
 
       return bookings;
     } catch (error) {
