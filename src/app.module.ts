@@ -11,6 +11,7 @@ import { CloudinaryModule } from 'nestjs-cloudinary';
 import { AuthModule } from './auth/auth.module';
 import { ServiceBookingsModule } from './service-bookings/service-bookings.module'
 import { FeedbackModule } from './feedback/feedback.module';
+import { AdviceModule } from './advice/advice.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { FeedbackModule } from './feedback/feedback.module';
     AuthModule,
     ServiceBookingsModule,
     FeedbackModule,
+    AdviceModule,
   ],
   controllers: [AppController],
   providers: [AppService],
