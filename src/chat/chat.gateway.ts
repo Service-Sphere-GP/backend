@@ -78,10 +78,11 @@ export class ChatGateway
   @UseGuards(WsJwtGuard)
   @SubscribeMessage('joinRoom')
   async handleJoinRoom(
-    @MessageBody() payload: JoinRoomDto,
+    @MessageBody() payload: any, //TODO use the dto instead
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
     const userId = client.data.user.userId;
+    payload = JSON.parse(payload);
     const { bookingId } = payload;
     this.logger.log(
       `User ${userId} attempting to join room for booking ${bookingId}`,
@@ -106,10 +107,11 @@ export class ChatGateway
   @UseGuards(WsJwtGuard)
   @SubscribeMessage('sendMessage')
   async handleMessage(
-    @MessageBody() payload: CreateMessageDto,
+    @MessageBody() payload: any, //TODO use the dto instead
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
     const senderId = client.data.user.userId;
+    payload = JSON.parse(payload);
     const { bookingId, content } = payload;
     this.logger.log(`User ${senderId} sending message to booking ${bookingId}`);
 
