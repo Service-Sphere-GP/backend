@@ -1,4 +1,3 @@
-// src/chat/chat.service.ts
 import {
   Injectable,
   NotFoundException,
@@ -89,19 +88,24 @@ export class ChatService {
       content: content,
     });
 
-    return newMessage.save();
+    return await newMessage.save();
   }
 
   async getChatHistory(
     userId: string | Types.ObjectId,
     bookingId: string | Types.ObjectId,
-  ): Promise<ChatMessage[]> {
+  ): Promise<any> {
     await this.validateUserAccess(userId, bookingId);
 
-    return this.chatMessageModel
-      .find({ booking_id: bookingId })
-      .sort({ createdAt: 1 })
-      .populate('sender_id', 'first_name last_name role')
-      .exec();
+    const bookingIdObj =
+      typeof bookingId === 'string' ? new Types.ObjectId(bookingId) : bookingId;
+
+    const messages = await this.chatMessageModel
+    .find({ booking_id: bookingIdObj })
+    .sort({ createdAt: 1 })
+    .populate('sender_id', 'full_name role')
+    .exec();
+
+    return messages;
   }
 }
