@@ -44,7 +44,6 @@ async function bootstrap() {
     .addTag('Services', 'Service management endpoints')
     .addTag('Bookings', 'Service booking management endpoints')
     .addTag('Feedback', 'User feedback management endpoints')
-    .addTag('Tickets', 'Support ticket management endpoints')
     .build();
   const document = SwaggerModule.createDocument(app, config);
 
@@ -66,7 +65,7 @@ async function bootstrap() {
         },
         {
           name: 'Customer Support',
-          tags: ['Feedback', 'Tickets'],
+          tags: ['Feedback'],
         },
       ],
     },
@@ -95,6 +94,5 @@ async function bootstrap() {
   const port = process.env.PORT || 3000;
   await app.listen(port);
 
-  console.log(`Application is running on: ${await app.getUrl()}`);
 }
 bootstrap();

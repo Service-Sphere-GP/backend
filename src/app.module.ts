@@ -12,7 +12,8 @@ import { AuthModule } from './auth/auth.module';
 import { ServiceBookingsModule } from './service-bookings/service-bookings.module';
 import { Feedback } from './feedback/schemas/feedback.schema';
 import { FeedbackModule } from './feedback/feedback.module';
-import { TicketsModule } from './tickets/tickets.module';
+import { AdviceModule } from './advice/advice.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -41,7 +42,8 @@ import { TicketsModule } from './tickets/tickets.module';
     AuthModule,
     ServiceBookingsModule,
     FeedbackModule,
-    TicketsModule,
+    AdviceModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],

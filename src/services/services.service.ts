@@ -168,4 +168,21 @@ export class ServicesService {
     }
     return service;
   }
+
+  async getAllServicesByProviderId(
+    serviceProviderId: string,
+  ): Promise<ServiceInterface[]> {
+    const serviceProvider = await this.serviceProviderModel
+      .findById(serviceProviderId)
+      .populate('services')
+      .exec();
+
+    if (!serviceProvider) {
+      throw new NotFoundException(
+        `Service Provider with ID ${serviceProviderId} not found`,
+      );
+    }
+
+    return serviceProvider.services;
+  }
 }

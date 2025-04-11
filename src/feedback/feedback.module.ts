@@ -8,5 +8,6 @@ import { Feedback, FeedbackSchema } from './schemas/feedback.schema';
   imports: [MongooseModule.forFeature([{ name: Feedback.name, schema: FeedbackSchema }])],
   controllers: [FeedbackController],
   providers: [FeedbackService],
+  exports: [FeedbackService], 
 })
 export class FeedbackModule {}
