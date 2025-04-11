@@ -36,7 +36,11 @@ export class ServicesService {
     userId: string,
   ): Promise<ServiceInterface> {
     const imageUrls = await Promise.all(
-      files.map((file) => this.cloudinary.uploadFile(file)),
+      files.map((file) =>
+        this.cloudinary.uploadFile(file, {
+          folder: 'ServiceSphere',
+        }),
+      ),
     );
     const { ...serviceData } = createServiceDto;
     const serviceProvider = await this.serviceProviderModel.findById(userId);
@@ -112,7 +116,9 @@ export class ServicesService {
     let imageUrls: { url: string }[] = [];
     if (files && files.length > 0) {
       const uploadResults = await Promise.all(
-        files.map((file) => this.cloudinary.uploadFile(file)),
+        files.map((file) => this.cloudinary.uploadFile(file, {
+          folder: 'ServiceSphere',
+        })),
       );
       imageUrls = uploadResults.map((result) => ({ url: result.url }));
     }
