@@ -18,6 +18,7 @@ import {
   ApiResponse,
   ApiConsumes,
   ApiBearerAuth,
+  ApiParam,
 } from '@nestjs/swagger';
 import { ServiceDto } from './dto/service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
@@ -74,6 +75,32 @@ export class ServicesController {
     @CurrentUser() currentUser: any,
   ): Promise<ServiceInterface[]> {
     return this.servicesService.getAllServicesByProviderId(currentUser.user_id);
+  }
+
+  @Get('provider/:providerId')
+  @ApiOperation({
+    summary: 'Retrieve all services by a specific service provider',
+    description:
+      'Returns a list of services created by a specific service provider.',
+  })
+  @ApiParam({
+    name: 'providerId',
+    description: 'The ID of the service provider',
+    required: true,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of services retrieved successfully',
+    type: [ServiceDto],
+  })
+  @ApiResponse({ status: 404, description: 'Service provider not found' })
+  @ApiBearerAuth('access-token')
+  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @Roles('admin', 'service_provider', 'customer')
+  async getServicesByProviderId(
+    @Param('providerId') providerId: string,
+  ): Promise<ServiceInterface[]> {
+    return this.servicesService.getAllServicesByProviderId(providerId);
   }
 
   @Get(':id')

@@ -92,7 +92,6 @@ export class UsersService {
   }
 
   async updateServiceProvider(id: string, updateData: Partial<User>) {
-
     // Find the current service provider first
     const serviceProvider = await this.userModel.findById(id).exec();
     if (!serviceProvider) {
@@ -106,7 +105,6 @@ export class UsersService {
       updateData.full_name = `${firstName} ${lastName}`;
     }
 
-
     // Instead of using findByIdAndUpdate, update the document directly and save it
     try {
       // Apply updates to the document
@@ -117,7 +115,6 @@ export class UsersService {
       // Save the updated document
       const savedServiceProvider = await serviceProvider.save();
 
-
       return savedServiceProvider;
     } catch (error) {
       throw error;
@@ -125,12 +122,15 @@ export class UsersService {
   }
 
   async deleteServiceProvider(id: string) {
-    const serviceProvider: any = await this.userModel.findById(id).exec();
+    const serviceProvider = await this.userModel.findById(id).exec();
     if (!serviceProvider) {
       throw new NotFoundException(`Service provider with id ${id} not found`);
     }
 
-    for (const service of serviceProvider.services) {
+    // Find all services associated with this provider and delete them
+    // Instead of iterating through serviceProvider.services
+    const services = await this.servicesService.getAllServicesByProviderId(id);
+    for (const service of services) {
       await this.servicesService.deleteService(service._id);
     }
 

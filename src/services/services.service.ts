@@ -61,11 +61,7 @@ export class ServicesService {
 
     const savedService = await newService.save();
 
-    // Add the service ID to the provider's services array, ensuring it's an ObjectId
-    serviceProvider.services.push(
-      savedService._id as unknown as  Types.ObjectId,
-    );
-    await serviceProvider.save();
+    // Removing the part that adds the service to the serviceProvider.services array
 
     return savedService;
   }
@@ -83,12 +79,11 @@ export class ServicesService {
 
     await service.deleteOne();
 
-    // delete the service from the service provider's services array
+    // Check that service provider exists but don't modify services array
     const serviceProvider = await this.serviceProviderModel.findById(
       service.service_provider,
     );
 
-    // throw an error if the service provider is not found
     if (!serviceProvider) {
       throw new NotFoundException(
         `Service Provider with ID ${service.service_provider} not found
@@ -96,11 +91,8 @@ export class ServicesService {
       );
     }
 
-    serviceProvider.services = serviceProvider.services.filter((svcId) => {
-      return svcId.toString() !== serviceId;
-    });
+    // Removing the part that filters the service from serviceProvider.services array
 
-    await serviceProvider.save();
     const serviceObject = service.toObject();
     return serviceObject;
   }
@@ -134,6 +126,7 @@ export class ServicesService {
     }
 
     const { images, ...restUpdateServiceDto } = updateServiceDto;
+
     const updateData: Partial<Service> = {
       ...restUpdateServiceDto,
       service_provider: service.service_provider,
@@ -147,12 +140,11 @@ export class ServicesService {
     const savedService = await service.save();
     const serviceObject = savedService.toObject();
 
-    // update that service in the services array of its service provider
+    // Check that service provider exists but don't modify services array
     const serviceProvider = await this.serviceProviderModel.findById(
       service.service_provider,
     );
 
-    // throw an error if the service provider is not found
     if (!serviceProvider) {
       throw new NotFoundException(
         `Service Provider with ID ${service.service_provider} not found
@@ -160,20 +152,7 @@ export class ServicesService {
       );
     }
 
-    const serviceIndex = serviceProvider.services.findIndex(
-      (svcId) => svcId.toString() === serviceId,
-    );
-
-    if (serviceIndex === -1) {
-      // If the service is not in the array, add it
-      serviceProvider.services.push(service._id as unknown as Types.ObjectId);
-    } else {
-      // If it exists, update the reference (though the ObjectId remains the same)
-      serviceProvider.services[serviceIndex] =
-        service._id as unknown as Types.ObjectId;
-    }
-
-    await serviceProvider.save();
+    // Removing the part that updates serviceProvider.services
 
     return serviceObject;
   }
@@ -193,7 +172,6 @@ export class ServicesService {
   async getAllServicesByProviderId(serviceProviderId: string): Promise<any> {
     const serviceProvider = await this.serviceProviderModel
       .findById(serviceProviderId)
-      .populate('services')
       .exec();
 
     if (!serviceProvider) {
@@ -202,6 +180,9 @@ export class ServicesService {
       );
     }
 
-    return serviceProvider.services;
+    // Instead of returning serviceProvider.services, query services directly
+    return this.serviceModel
+      .find({ service_provider: serviceProviderId })
+      .exec();
   }
 }

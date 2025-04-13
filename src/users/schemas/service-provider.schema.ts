@@ -10,8 +10,7 @@ export class ServiceProvider extends User {
   @Prop()
   business_name: string;
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Service' }], default: [] })
-  services: Types.ObjectId[];
+  // services field has been removed
 
   @Prop({
     type: String,
