@@ -116,9 +116,11 @@ export class ServicesService {
     let imageUrls: { url: string }[] = [];
     if (files && files.length > 0) {
       const uploadResults = await Promise.all(
-        files.map((file) => this.cloudinary.uploadFile(file, {
-          folder: 'ServiceSphere',
-        })),
+        files.map((file) =>
+          this.cloudinary.uploadFile(file, {
+            folder: 'ServiceSphere',
+          }),
+        ),
       );
       imageUrls = uploadResults.map((result) => ({ url: result.url }));
     }
@@ -162,7 +164,11 @@ export class ServicesService {
   }
 
   async getServiceById(serviceId: string): Promise<ServiceInterface> {
-    const service = await this.serviceModel.findById(serviceId);
+    const service = await this.serviceModel
+      .findById(serviceId)
+      .populate('service_provider_id', 'full_name business_name rating_average')
+      .exec();
+
     if (!service) {
       throw new NotFoundException(`Service with ID ${serviceId} not found`);
     }

@@ -23,12 +23,19 @@ export class Service extends Document {
 
   @Prop({ type: [String], default: [] })
   images: string[];
-  
+
   @Prop({ default: Date.now })
   creation_time: Date;
 
-  @Prop({ required: true })
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   service_provider_id: Types.ObjectId;
+
+  @Prop({ type: [Types.ObjectId], ref: 'Feedback', default: [] })
+  feedbacks: Types.ObjectId[];
+
+
+  @Prop({ type: Number, default: 3 })
+  rating_average: number;
 }
 
 export const ServiceSchema = SchemaFactory.createForClass(Service);
