@@ -32,5 +32,5 @@ export class ServiceDto {
   images: string[];
 
   @ApiProperty({ example: "ObjectId('6794d963db9ce9d9caa11260')" })
-  service_provider_id?: Types.ObjectId;
+  service_provider?: Types.ObjectId;
 }

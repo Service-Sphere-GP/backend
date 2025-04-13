@@ -26,7 +26,10 @@ export class ServicesService {
    * @returns An array of ServiceInterface objects with serviceProviderId.
    */
   async getAllServices(): Promise<ServiceInterface[]> {
-    const services = await this.serviceModel.find().exec();
+    const services = await this.serviceModel
+      .find()
+      .populate('service_provider', 'full_name business_name rating_average')
+      .exec();
     return services;
   }
 
@@ -50,17 +53,21 @@ export class ServicesService {
       );
     }
 
+
     const newService = await this.serviceModel.create({
       ...serviceData,
-      service_provider_id: userId,
+      service_provider: userId,
       images: imageUrls.map((image) => image.url),
     });
 
     const savedService = await newService.save();
-    serviceProvider.services.push(savedService);
-    await serviceProvider.save();
 
-    return savedService.toObject();
+
+    // serviceProvider.services.push(savedService);
+
+    // await serviceProvider.save();
+
+    return savedService;
   }
   /**
    * Deletes a service by ID.
@@ -77,13 +84,13 @@ export class ServicesService {
 
     // delete the service from the service provider's services array
     const serviceProvider = await this.serviceProviderModel.findById(
-      service.service_provider_id,
+      service.service_provider,
     );
 
     // throw an error if the service provider is not found
     if (!serviceProvider) {
       throw new NotFoundException(
-        `Service Provider with ID ${service.service_provider_id} not found
+        `Service Provider with ID ${service.service_provider} not found
       `,
       );
     }
@@ -128,7 +135,7 @@ export class ServicesService {
     const { images, ...restUpdateServiceDto } = updateServiceDto;
     const updateData: Partial<Service> = {
       ...restUpdateServiceDto,
-      service_provider_id: service.service_provider_id,
+      service_provider: service.service_provider,
     };
 
     if (imageUrls.length > 0) {
@@ -141,13 +148,13 @@ export class ServicesService {
 
     // update that service in the services array of its service provider
     const serviceProvider = await this.serviceProviderModel.findById(
-      service.service_provider_id,
+      service.service_provider,
     );
 
     // throw an error if the service provider is not found
     if (!serviceProvider) {
       throw new NotFoundException(
-        `Service Provider with ID ${service.service_provider_id} not found
+        `Service Provider with ID ${service.service_provider} not found
       `,
       );
     }
@@ -166,7 +173,7 @@ export class ServicesService {
   async getServiceById(serviceId: string): Promise<ServiceInterface> {
     const service = await this.serviceModel
       .findById(serviceId)
-      .populate('service_provider_id', 'full_name business_name rating_average')
+      .populate('service_provider', 'full_name business_name rating_average')
       .exec();
 
     if (!service) {

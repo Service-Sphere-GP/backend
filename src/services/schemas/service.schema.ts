@@ -28,7 +28,7 @@ export class Service extends Document {
   creation_time: Date;
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  service_provider_id: Types.ObjectId;
+  service_provider: Types.ObjectId;
 
   @Prop({ type: [Types.ObjectId], ref: 'Feedback', default: [] })
   feedbacks: Types.ObjectId[];

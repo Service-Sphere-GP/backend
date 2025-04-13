@@ -39,12 +39,12 @@ export class ChatService {
     }
 
     const service = booking.service_id as unknown as Service;
-    if (!service || !service.service_provider_id) {
+    if (!service || !service.service_provider) {
       throw new InternalServerErrorException(
         'Could not determine service provider for this booking.',
       );
     }
-    const providerId = service.service_provider_id;
+    const providerId = service.service_provider;
 
     const userIdObj =
       typeof userId === 'string' ? new Types.ObjectId(userId) : userId;
