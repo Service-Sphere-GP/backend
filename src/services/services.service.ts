@@ -1,7 +1,7 @@
 // src/services/services.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose'; // Import Types
 import { ServiceProvider } from '../users/schemas/service-provider.schema';
 import { Service } from './schemas/service.schema';
 import { ServiceInterface } from './interfaces/service.interface';
@@ -53,7 +53,6 @@ export class ServicesService {
       );
     }
 
-
     const newService = await this.serviceModel.create({
       ...serviceData,
       service_provider: userId,
@@ -62,13 +61,15 @@ export class ServicesService {
 
     const savedService = await newService.save();
 
-
-    // serviceProvider.services.push(savedService);
-
-    // await serviceProvider.save();
+    // Add the service ID to the provider's services array, ensuring it's an ObjectId
+    serviceProvider.services.push(
+      savedService._id as unknown as  Types.ObjectId,
+    );
+    await serviceProvider.save();
 
     return savedService;
   }
+
   /**
    * Deletes a service by ID.
    * @param serviceId The ID of the service to delete.
@@ -95,8 +96,8 @@ export class ServicesService {
       );
     }
 
-    serviceProvider.services = serviceProvider.services.filter((service) => {
-      return service._id.toString() !== serviceId;
+    serviceProvider.services = serviceProvider.services.filter((svcId) => {
+      return svcId.toString() !== serviceId;
     });
 
     await serviceProvider.save();
@@ -160,10 +161,17 @@ export class ServicesService {
     }
 
     const serviceIndex = serviceProvider.services.findIndex(
-      (s) => s._id.toString() === serviceId,
+      (svcId) => svcId.toString() === serviceId,
     );
 
-    serviceProvider.services[serviceIndex] = service;
+    if (serviceIndex === -1) {
+      // If the service is not in the array, add it
+      serviceProvider.services.push(service._id as unknown as Types.ObjectId);
+    } else {
+      // If it exists, update the reference (though the ObjectId remains the same)
+      serviceProvider.services[serviceIndex] =
+        service._id as unknown as Types.ObjectId;
+    }
 
     await serviceProvider.save();
 
@@ -182,9 +190,7 @@ export class ServicesService {
     return service;
   }
 
-  async getAllServicesByProviderId(
-    serviceProviderId: string,
-  ): Promise<ServiceInterface[]> {
+  async getAllServicesByProviderId(serviceProviderId: string): Promise<any> {
     const serviceProvider = await this.serviceProviderModel
       .findById(serviceProviderId)
       .populate('services')

@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { User } from './user.schema';
-import { Service, ServiceSchema } from '../../services/schemas/service.schema';
+import { Types } from 'mongoose';
 import { Document } from 'mongoose';
 
 export type ServiceProviderDocument = ServiceProvider & Document;
@@ -10,8 +10,8 @@ export class ServiceProvider extends User {
   @Prop()
   business_name: string;
 
-  @Prop({ type: [ServiceSchema], default: [] })
-  services: Service[];
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Service' }], default: [] })
+  services: Types.ObjectId[];
 
   @Prop({
     type: String,

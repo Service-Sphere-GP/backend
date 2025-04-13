@@ -27,8 +27,8 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 
 import { Roles } from './../common/decorators/roles.decorators';
 import { RolesGuard } from './../auth/guards/roles.guard';
-
 import { BlacklistedJwtAuthGuard } from './..//auth/guards/blacklisted-jwt-auth.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @ApiTags('Services')
 @Controller('services')
@@ -50,6 +50,30 @@ export class ServicesController {
   @Roles('admin', 'service_provider', 'customer')
   async getAllServices(): Promise<ServiceInterface[]> {
     return this.servicesService.getAllServices();
+  }
+
+  @Get('my-services')
+  @ApiOperation({
+    summary: 'Get all services of the logged-in user',
+    description:
+      'Returns all services created by the authenticated service provider.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of services retrieved successfully',
+    type: [ServiceDto],
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Not a service provider',
+  })
+  @ApiBearerAuth('access-token')
+  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @Roles('service_provider')
+  async getMyServices(
+    @CurrentUser() currentUser: any,
+  ): Promise<ServiceInterface[]> {
+    return this.servicesService.getAllServicesByProviderId(currentUser.user_id);
   }
 
   @Get(':id')
