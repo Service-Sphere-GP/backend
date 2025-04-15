@@ -80,7 +80,13 @@ export class BookingsService {
         .find({
           customer_id: customerId,
         })
-        .populate('service_id')
+        .populate({
+          path: 'service_id',
+          populate: {
+            path: 'service_provider',
+            select: 'full_name profile_image',
+          },
+        })
         .exec();
 
       return bookings;
