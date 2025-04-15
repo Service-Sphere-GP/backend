@@ -23,35 +23,14 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ServicesService } from '../services/services.service';
 import { BookingsService } from './service-bookings.service';
 
-@ApiTags('Bookings')
-@Controller('services/:serviceId/bookings')
+@Controller('bookings')
 export class BookingsController {
   constructor(
     private readonly bookingService: BookingsService,
     private readonly servicesService: ServicesService,
   ) {}
 
-  @Post()
-  @ApiOperation({
-    summary: 'Create a booking for a service',
-    description:
-      'Creates a new booking for the specified service. Only customers can book services.',
-  })
-  @ApiParam({
-    name: 'serviceId',
-    description: 'The ID of the service to book',
-    type: String,
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'The booking has been successfully created',
-  })
-  @ApiResponse({ status: 404, description: 'Service not found' })
-  @ApiResponse({
-    status: 400,
-    description: 'Bad request - Invalid booking data',
-  })
-  @ApiBearerAuth('access-token')
+  @Post(':serviceId')
   @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
   @Roles('customer')
   @UsePipes(new ValidationPipe({ transform: true }))
@@ -75,16 +54,6 @@ export class BookingsController {
   }
 
   @Get()
-  @ApiOperation({
-    summary: 'Get all bookings for customer',
-    description: 'Retrieves all bookings made by the authenticated customer.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'List of bookings retrieved successfully',
-  })
-  @ApiResponse({ status: 403, description: 'Forbidden - Not a customer' })
-  @ApiBearerAuth('access-token')
   @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
   @Roles('admin','customer')
   async getCustomerBookings(@CurrentUser() customer: any) {
