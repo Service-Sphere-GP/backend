@@ -9,6 +9,7 @@ import { CreateServiceDto } from './dto/create-service.dto';
 import { CloudinaryService } from 'nestjs-cloudinary';
 import { Express } from 'express';
 import { UpdateServiceDto } from './dto/update-service.dto';
+import { FeedbackService } from '../feedback/feedback.service';
 
 @Injectable()
 export class ServicesService {
@@ -16,15 +17,14 @@ export class ServicesService {
     @InjectModel(ServiceProvider.name)
     private serviceProviderModel: Model<ServiceProvider>,
 
-    @InjectModel(Service.name) // Injecting Service model
-    private serviceModel: Model<Service>, // Defining serviceModel property
+    @InjectModel(Service.name) 
+    private serviceModel: Model<Service>,
 
     private readonly cloudinary: CloudinaryService,
+    private readonly feedbackService: FeedbackService,
   ) {}
 
-  /**
-   * @returns An array of ServiceInterface objects with serviceProviderId.
-   */
+
   async getAllServices(): Promise<ServiceInterface[]> {
     const services = await this.serviceModel
       .find()
@@ -60,17 +60,10 @@ export class ServicesService {
     });
 
     const savedService = await newService.save();
-
-    // Removing the part that adds the service to the serviceProvider.services array
-
     return savedService;
   }
 
-  /**
-   * Deletes a service by ID.
-   * @param serviceId The ID of the service to delete.
-   * @returns The deleted service.
-   */
+
   async deleteService(serviceId: string): Promise<ServiceInterface> {
     const service = await this.serviceModel.findById(serviceId);
     if (!service) {
@@ -79,7 +72,6 @@ export class ServicesService {
 
     await service.deleteOne();
 
-    // Check that service provider exists but don't modify services array
     const serviceProvider = await this.serviceProviderModel.findById(
       service.service_provider,
     );
@@ -90,19 +82,11 @@ export class ServicesService {
       `,
       );
     }
-
-    // Removing the part that filters the service from serviceProvider.services array
-
     const serviceObject = service.toObject();
     return serviceObject;
   }
 
-  /**
-   * Updates a service by ID.
-   * @param serviceId The ID of the service to update.
-   * @param updateServiceDto The updated service data.
-   * @returns The updated service.
-   */
+
   async updateService(
     serviceId: string,
     updateServiceDto: UpdateServiceDto,
@@ -140,7 +124,6 @@ export class ServicesService {
     const savedService = await service.save();
     const serviceObject = savedService.toObject();
 
-    // Check that service provider exists but don't modify services array
     const serviceProvider = await this.serviceProviderModel.findById(
       service.service_provider,
     );
@@ -151,8 +134,6 @@ export class ServicesService {
       `,
       );
     }
-
-    // Removing the part that updates serviceProvider.services
 
     return serviceObject;
   }
@@ -180,9 +161,30 @@ export class ServicesService {
       );
     }
 
-    // Instead of returning serviceProvider.services, query services directly
     return this.serviceModel
       .find({ service_provider: serviceProviderId })
       .exec();
+  }
+
+  async updateServiceRating(serviceId: string): Promise<boolean> {
+    try {
+      const service = await this.serviceModel.findById(serviceId);
+      if (!service) {
+        throw new NotFoundException(`Service with ID ${serviceId} not found`);
+      }
+
+      const averageRating =
+        await this.feedbackService.calculateAverageRating(serviceId);
+
+      await this.serviceModel.updateOne(
+        { _id: serviceId },
+        { rating_average: averageRating },
+      );
+
+      return true;
+    } catch (error) {
+      console.error(`Error updating service rating for ${serviceId}:`, error);
+      return false;
+    }
   }
 }
