@@ -136,4 +136,38 @@ export class BookingsService {
       throw new InternalServerErrorException('Failed to update booking status');
     }
   }
+
+  async getProviderBookings(providerId: string): Promise<ServiceBookings[]> {
+    try {
+      if (!Types.ObjectId.isValid(providerId)) {
+        throw new BadRequestException('Invalid provider ID format');
+      }
+
+      const services =
+        await this.servicesService.getAllServicesByProviderId(providerId);
+
+      if (!services || services.length === 0) {
+        return [];
+      }
+      const serviceIds = services.map((service) => service._id.toString());
+
+      const bookings = await this.bookingModel
+        .find({
+          service: {
+            $in: serviceIds,
+          },
+        })
+        .populate('customer', 'full_name email profile_image')
+        .populate('service')
+        .exec();
+
+      return bookings;
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      console.error('Fetching provider bookings error:', error);
+      throw new InternalServerErrorException('Failed to retrieve bookings');
+    }
+  }
 }

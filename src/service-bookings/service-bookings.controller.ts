@@ -68,6 +68,17 @@ export class BookingsController {
     }
   }
 
+  @Get('provider')
+  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @Roles('service_provider')
+  async getProviderBookings(@CurrentUser() provider: any) {
+    try {
+      return await this.bookingService.getProviderBookings(provider.user_id);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
   @Patch(':id/status')
   @UseGuards(BlacklistedJwtAuthGuard)
   @UsePipes(new ValidationPipe({ transform: true }))
