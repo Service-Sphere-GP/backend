@@ -2,7 +2,9 @@ import {
   Controller,
   Post,
   Get,
+  Patch,
   Param,
+  Body,
   UseGuards,
   NotFoundException,
   BadRequestException,
@@ -15,6 +17,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiParam,
+  ApiBody,
 } from '@nestjs/swagger';
 import { BlacklistedJwtAuthGuard } from '../auth/guards/blacklisted-jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -22,6 +25,7 @@ import { Roles } from '../common/decorators/roles.decorators';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ServicesService } from '../services/services.service';
 import { BookingsService } from './service-bookings.service';
+import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
 
 @Controller('bookings')
 export class BookingsController {
@@ -55,11 +59,31 @@ export class BookingsController {
 
   @Get()
   @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
-  @Roles('admin','customer')
+  @Roles('admin', 'customer')
   async getCustomerBookings(@CurrentUser() customer: any) {
     try {
       return await this.bookingService.getCustomerBookings(customer.user_id);
     } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  @Patch(':id/status')
+  @UseGuards(BlacklistedJwtAuthGuard)
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async updateBookingStatus(
+    @Param('id') id: string,
+    @Body() updateStatusDto: UpdateBookingStatusDto,
+  ) {
+    try {
+      return await this.bookingService.updateBookingStatus(
+        id,
+        updateStatusDto.status,
+      );
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       throw new BadRequestException(error.message);
     }
   }

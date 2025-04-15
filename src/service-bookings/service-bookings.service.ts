@@ -98,4 +98,42 @@ export class BookingsService {
       throw new InternalServerErrorException('Failed to retrieve bookings');
     }
   }
+
+  async updateBookingStatus(
+    bookingId: string,
+    status: string,
+  ): Promise<ServiceBookings> {
+    try {
+      if (!Types.ObjectId.isValid(bookingId)) {
+        throw new BadRequestException('Invalid booking ID format');
+      }
+
+      const booking = await this.bookingModel.findById(bookingId).exec();
+      if (!booking) {
+        throw new NotFoundException(`Booking with ID ${bookingId} not found`);
+      }
+
+      if (
+        !['pending', 'confirmed', 'completed', 'cancelled'].includes(status)
+      ) {
+        throw new BadRequestException(
+          'Invalid status. Must be one of: pending, confirmed, completed, cancelled',
+        );
+      }
+
+      booking.status = status;
+      const updatedBooking = await booking.save();
+
+      return updatedBooking;
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+      console.error('Booking status update error:', error);
+      throw new InternalServerErrorException('Failed to update booking status');
+    }
+  }
 }
