@@ -4,10 +4,10 @@ import { Types } from 'mongoose';
 @Schema({ timestamps: true })
 export class ServiceBookings {
   @Prop({ type: Types.ObjectId, ref: 'Customer', required: true })
-  customer_id: Types.ObjectId;
+  customer: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Service', required: true })
-  service_id: Types.ObjectId;
+  service: Types.ObjectId;
 
   @Prop({
     type: String,

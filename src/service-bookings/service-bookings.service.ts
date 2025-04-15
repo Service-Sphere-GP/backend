@@ -43,8 +43,8 @@ export class BookingsService {
       }
 
       const booking = new this.bookingModel({
-        customer_id: customerId,
-        service_id: serviceId,
+        customer: customerId,
+        service: serviceId,
         status: 'pending',
       });
 
@@ -78,10 +78,10 @@ export class BookingsService {
 
       const bookings = await this.bookingModel
         .find({
-          customer_id: customerId,
+          customer: customerId,
         })
         .populate({
-          path: 'service_id',
+          path: 'service',
           populate: {
             path: 'service_provider',
             select: 'full_name profile_image',

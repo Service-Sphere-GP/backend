@@ -38,7 +38,7 @@ export class ChatService {
       throw new ForbiddenException('Chat is closed for this booking.');
     }
 
-    const service = booking.service_id as unknown as Service;
+    const service = booking.service as unknown as Service;
     if (!service || !service.service_provider) {
       throw new InternalServerErrorException(
         'Could not determine service provider for this booking.',
@@ -48,7 +48,7 @@ export class ChatService {
 
     const userIdObj =
       typeof userId === 'string' ? new Types.ObjectId(userId) : userId;
-    const customerId = booking.customer_id;
+    const customerId = booking.customer;
 
     if (!userIdObj.equals(customerId) && !userIdObj.equals(providerId)) {
       throw new ForbiddenException(
@@ -73,10 +73,10 @@ export class ChatService {
       typeof senderId === 'string' ? new Types.ObjectId(senderId) : senderId;
     let receiverId: Types.ObjectId;
 
-    if (senderIdObj.equals(booking.customer_id)) {
+    if (senderIdObj.equals(booking.customer)) {
       receiverId = providerId;
     } else if (senderIdObj.equals(providerId)) {
-      receiverId = booking.customer_id;
+      receiverId = booking.customer;
     } else {
       throw new ForbiddenException('Sender is not part of this booking.');
     }
