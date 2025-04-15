@@ -39,25 +39,5 @@ export class CreateFeedbackDto {
   })
   @IsMongoId()
   @IsOptional()
-  about_service?: Types.ObjectId;
-
-  @ApiProperty({
-    description:
-      'ID of the customer this feedback is about (for service providers)',
-    example: '507f1f77bcf86cd799439017',
-    required: false,
-  })
-  @IsMongoId()
-  @IsOptional()
-  about_customer?: Types.ObjectId;
-
-  // For backward compatibility - will be deprecated
-  @ApiProperty({
-    description: 'Legacy field, use about_service instead',
-    required: false,
-    deprecated: true,
-  })
-  @IsMongoId()
-  @IsOptional()
-  given_to_service?: Types.ObjectId;
+  service: Types.ObjectId;
 }

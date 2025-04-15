@@ -3,6 +3,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Feedback } from './schemas/feedback.schema';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { User } from 'src/users/schemas/user.schema';
 
 @Injectable()
 export class FeedbackService {
@@ -12,25 +14,10 @@ export class FeedbackService {
 
   async create(
     createFeedbackDto: CreateFeedbackDto,
-    user: any,
   ): Promise<Feedback> {
-    const feedbackData: any = {
-      rating: createFeedbackDto.rating,
-      message: createFeedbackDto.message,
-      about_service:
-        createFeedbackDto.about_service ||
-        createFeedbackDto.given_to_service ||
-        null,
-      about_customer: createFeedbackDto.about_customer || null,
+    const feedbackData = {
+      ...createFeedbackDto,
     };
-
-    // Assign the user ID based on their role
-    if (user.role === 'customer') {
-      feedbackData.from_customer = user.user_id;
-    } else if (user.role === 'service_provider') {
-      feedbackData.from_provider = user.user_id;
-    }
-
     const newFeedback = await this.feedbackModel.create(feedbackData);
     return newFeedback;
   }
@@ -47,31 +34,17 @@ export class FeedbackService {
     return feedback;
   }
 
-  async delete(id: string, current_user: any): Promise<Feedback> {
-    // check if the feedback exists
+  async delete(id){
     const feedback = await this.feedbackModel.findById(id).exec();
     if (!feedback) {
       throw new NotFoundException(`Feedback with ID ${id} not found`);
     }
-
-    // check if the feedback belongs to the user
-    const fromCustomerId = feedback.from_customer?.toString();
-    const fromProviderId = feedback.from_provider?.toString();
-
-    if (
-      fromCustomerId !== current_user.user_id &&
-      fromProviderId !== current_user.user_id
-    ) {
-      throw new NotFoundException(`Feedback with ID ${id} not found`);
-    }
-
     await this.feedbackModel.findByIdAndDelete(id).exec();
-    return feedback;
   }
 
   async getAllFeedbackByServiceId(serviceId: string): Promise<Feedback[]> {
     const feedback = await this.feedbackModel
-      .find({ about_service: serviceId })
+      .find({ service: serviceId })
       .exec();
     if (!feedback) {
       throw new NotFoundException(

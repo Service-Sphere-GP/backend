@@ -30,10 +30,6 @@ export class Service extends Document {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   service_provider: Types.ObjectId;
 
-  @Prop({ type: [Types.ObjectId], ref: 'Feedback', default: [] })
-  feedbacks: Types.ObjectId[];
-
-
   @Prop({ type: Number, default: 3 })
   rating_average: number;
 }
