@@ -36,7 +36,7 @@ export class BookingsService {
       }
 
       const provider = await this.UsersService.findById(
-        service.service_provider_id.toString(),
+        service.service_provider?._id.toString(),
       );
       if (!provider) {
         throw new NotFoundException('Service provider not available');

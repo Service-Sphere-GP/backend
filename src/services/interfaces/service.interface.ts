@@ -9,5 +9,5 @@ export interface ServiceInterface {
   category?: string;
   creation_time: Date;
   images: string[]; // URLs of images after uploading to Cloudinary
-  service_provider_id?: Types.ObjectId;
+  service_provider?: Types.ObjectId;
 }
