@@ -88,7 +88,7 @@ export class FeedbackService {
   async findAll(): Promise<Feedback[]> {
     return await this.feedbackModel
       .find()
-      .populate('user', 'first_name last_name')
+      .populate('user', 'first_name last_name profile_image')
       .populate('service', 'name')
       .exec();
   }
@@ -96,7 +96,7 @@ export class FeedbackService {
   async findOne(id: string): Promise<Feedback> {
     const feedback = await this.feedbackModel
       .findById(id)
-      .populate('user', 'first_name last_name')
+      .populate('user', 'first_name last_name profile_image')
       .populate('service', 'name')
       .exec();
 
