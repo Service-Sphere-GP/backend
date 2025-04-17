@@ -89,6 +89,7 @@ export class FeedbackService {
     return await this.feedbackModel
       .find()
       .populate('user', 'first_name last_name profile_image')
+      .populate('service', 'service_name')
       .populate('service', 'name')
       .exec();
   }
@@ -97,6 +98,7 @@ export class FeedbackService {
     const feedback = await this.feedbackModel
       .findById(id)
       .populate('user', 'first_name last_name profile_image')
+      .populate('service', 'service_name')
       .populate('service', 'name')
       .exec();
 
@@ -135,7 +137,9 @@ export class FeedbackService {
   async getAllFeedbackByServiceId(serviceId: string): Promise<Feedback[]> {
     const feedback = await this.feedbackModel
       .find({ service: serviceId })
-      .populate('user', 'first_name last_name')
+      .populate('user', 'first_name last_name profile_image')
+      .populate('service', 'service_name')
+      .populate('se')
       .exec();
 
     if (!feedback) {
@@ -151,6 +155,7 @@ export class FeedbackService {
     return await this.feedbackModel
       .find({ user: userId })
       .populate('service', 'name')
+      .populate('service', 'service_name')
       .populate('booking')
       .exec();
   }
