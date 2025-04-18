@@ -142,7 +142,7 @@ export class ServicesService {
   async getServiceById(serviceId: string): Promise<ServiceInterface> {
     const service = await this.serviceModel
       .findById(serviceId)
-      .populate('service_provider', 'full_name business_name rating_average')
+      .populate('service_provider', 'full_name business_name rating_average profile_image')
       .exec();
 
     if (!service) {
