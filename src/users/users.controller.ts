@@ -8,6 +8,8 @@ import {
   Delete,
   Patch,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -18,6 +20,7 @@ import {
   ApiParam,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { UsersService } from './users.service';
 import { User } from './schemas/user.schema';
 import { CreateAdminDto } from './dto/create-admin.dto';
@@ -82,25 +85,28 @@ export class UsersController {
   @ApiTags('Customers')
   @ApiOperation({ summary: 'Update a customer' })
   @ApiResponse({ status: 200, description: 'The updated customer' })
+  @ApiConsumes('multipart/form-data')
   @ApiBody({
-    type: User,
-    examples: {
-      updateCustomerExample: {
-        summary: 'Example JSON payload',
-        value: {
-          first_name: 'John',
-          last_name: 'Doe',
-          email: 'john.doe@example.com',
+    schema: {
+      type: 'object',
+      properties: {
+        first_name: { type: 'string' },
+        last_name: { type: 'string' },
+        email: { type: 'string' },
+        profile_image: {
+          type: 'string',
+          format: 'binary',
         },
       },
     },
   })
-  @ApiConsumes('application/json')
+  @UseInterceptors(FileInterceptor('profile_image'))
   async updateCustomer(
     @Param('id') id: string,
     @Body() updateData: Partial<User>,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
-    return this.usersService.updateCustomer(id, updateData);
+    return this.usersService.updateCustomer(id, updateData, file);
   }
 
   @Delete('customers/:id')
@@ -113,26 +119,33 @@ export class UsersController {
 
   @Patch('service-providers/:id')
   @ApiTags('Service Providers')
+  @ApiConsumes('multipart/form-data')
   @ApiBody({
-    type: User,
-    examples: {
-      updateCustomerExample: {
-        summary: 'Example JSON payload',
-        value: {
-          first_name: 'John',
-          last_name: 'Doe',
-          email: 'john.doe@example.com',
+    schema: {
+      type: 'object',
+      properties: {
+        first_name: { type: 'string' },
+        last_name: { type: 'string' },
+        email: { type: 'string' },
+        business_name: { type: 'string' },
+        business_address: { type: 'string' },
+        tax_id: { type: 'string' },
+        profile_image: {
+          type: 'string',
+          format: 'binary',
         },
       },
     },
   })
   @ApiOperation({ summary: 'Update a service provider' })
   @ApiResponse({ status: 200, description: 'The updated service provider' })
+  @UseInterceptors(FileInterceptor('profile_image'))
   async updateServiceProvider(
     @Param('id') id: string,
     @Body() updateData: Partial<User>,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
-    return this.usersService.updateServiceProvider(id, updateData);
+    return this.usersService.updateServiceProvider(id, updateData, file);
   }
 
   @Delete('service-providers/:id')
@@ -199,29 +212,37 @@ export class UsersController {
   @ApiTags('Admins')
   @ApiOperation({ summary: 'Update an admin' })
   @ApiResponse({ status: 200, description: 'The updated admin' })
+  @ApiConsumes('multipart/form-data')
   @ApiBody({
-    type: User,
-    examples: {
-      updateAdminExample: {
-        summary: 'Example JSON payload',
-        value: {
-          first_name: 'Updated',
-          last_name: 'Admin',
-          email: 'updated.admin@example.com',
-          permissions: ['manage_users', 'manage_services', 'manage_all'],
+    schema: {
+      type: 'object',
+      properties: {
+        first_name: { type: 'string' },
+        last_name: { type: 'string' },
+        email: { type: 'string' },
+        permissions: {
+          type: 'array',
+          items: {
+            type: 'string',
+          },
+        },
+        profile_image: {
+          type: 'string',
+          format: 'binary',
         },
       },
     },
   })
-  @ApiConsumes('application/json')
+  @UseInterceptors(FileInterceptor('profile_image'))
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   async updateAdmin(
     @Param('id') id: string,
     @Body() updateData: Partial<User>,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
-    return this.usersService.updateAdmin(id, updateData);
+    return this.usersService.updateAdmin(id, updateData, file);
   }
 
   @Delete('admins/:id')

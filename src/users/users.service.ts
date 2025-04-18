@@ -7,12 +7,14 @@ import { CreateServiceProviderDto } from './dto/create-service-provider.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { User } from './schemas/user.schema';
 import { ServicesService } from '../services/services.service';
+import { CloudinaryService } from 'nestjs-cloudinary';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     private servicesService: ServicesService,
+    private readonly cloudinary: CloudinaryService,
   ) {}
 
   async findAllCustomers(): Promise<User[] | null> {
@@ -76,11 +78,46 @@ export class UsersService {
       .exec();
   }
 
-  async updateCustomer(id: string, updateData: Partial<User>) {
-    updateData.full_name = `${updateData.first_name} ${updateData.last_name}`;
-    return this.userModel
-      .findByIdAndUpdate(id, updateData, { new: true })
-      .exec();
+  async updateCustomer(
+    id: string,
+    updateData: any,
+    file?: Express.Multer.File,
+  ) {
+    // Find the current customer first
+    const customer = await this.userModel.findById(id).exec();
+    if (!customer) {
+      throw new NotFoundException(`Customer with id ${id} not found`);
+    }
+
+    // Handle profile image upload if a file was provided
+    if (file) {
+      try {
+        const uploadResult = await this.cloudinary.uploadFile(file, {
+          folder: 'ServiceSphere/users',
+        });
+        updateData.profile_image = uploadResult.url;
+      } catch (error) {
+        console.error('Error uploading profile image:', error);
+        // Continue with the update even if image upload fails
+      }
+    }
+
+    // Only set full_name if first_name or last_name is being updated
+    if (updateData.first_name || updateData.last_name) {
+      const firstName = updateData.first_name || customer.first_name;
+      const lastName = updateData.last_name || customer.last_name;
+      updateData.full_name = `${firstName} ${lastName}`;
+    }
+
+    // Apply updates to the document
+    Object.keys(updateData).forEach((key) => {
+      customer[key] = updateData[key];
+    });
+
+    // Save the updated document
+    const savedCustomer = await customer.save();
+
+    return savedCustomer;
   }
 
   async deleteCustomer(id: string) {
@@ -91,11 +128,28 @@ export class UsersService {
     return this.userModel.find({ role: 'service_provider' }).exec();
   }
 
-  async updateServiceProvider(id: string, updateData: Partial<User>) {
+  async updateServiceProvider(
+    id: string,
+    updateData: any,
+    file?: Express.Multer.File,
+  ) {
     // Find the current service provider first
     const serviceProvider = await this.userModel.findById(id).exec();
     if (!serviceProvider) {
       throw new NotFoundException(`Service provider with id ${id} not found`);
+    }
+
+    // Handle profile image upload if a file was provided
+    if (file) {
+      try {
+        const uploadResult = await this.cloudinary.uploadFile(file, {
+          folder: 'ServiceSphere/users',
+        });
+        updateData.profile_image = uploadResult.url;
+      } catch (error) {
+        console.error('Error uploading profile image:', error);
+        // Continue with the update even if image upload fails
+      }
     }
 
     // Only set full_name if first_name or last_name is being updated
@@ -105,20 +159,15 @@ export class UsersService {
       updateData.full_name = `${firstName} ${lastName}`;
     }
 
-    // Instead of using findByIdAndUpdate, update the document directly and save it
-    try {
-      // Apply updates to the document
-      Object.keys(updateData).forEach((key) => {
-        serviceProvider[key] = updateData[key];
-      });
+    // Apply updates to the document
+    Object.keys(updateData).forEach((key) => {
+      serviceProvider[key] = updateData[key];
+    });
 
-      // Save the updated document
-      const savedServiceProvider = await serviceProvider.save();
+    // Save the updated document
+    const savedServiceProvider = await serviceProvider.save();
 
-      return savedServiceProvider;
-    } catch (error) {
-      throw error;
-    }
+    return savedServiceProvider;
   }
 
   async deleteServiceProvider(id: string) {
@@ -189,11 +238,42 @@ export class UsersService {
     return admin;
   }
 
-  async updateAdmin(id: string, updateData: Partial<User>) {
-    updateData.full_name = `${updateData.first_name} ${updateData.last_name}`;
-    return this.userModel
-      .findByIdAndUpdate(id, updateData, { new: true })
-      .exec();
+  async updateAdmin(id: string, updateData: any, file?: Express.Multer.File) {
+    // Find the current admin first
+    const admin = await this.userModel.findById(id).exec();
+    if (!admin) {
+      throw new NotFoundException(`Admin with id ${id} not found`);
+    }
+
+    // Handle profile image upload if a file was provided
+    if (file) {
+      try {
+        const uploadResult = await this.cloudinary.uploadFile(file, {
+          folder: 'ServiceSphere/users',
+        });
+        updateData.profile_image = uploadResult.url;
+      } catch (error) {
+        console.error('Error uploading profile image:', error);
+        // Continue with the update even if image upload fails
+      }
+    }
+
+    // Only set full_name if first_name or last_name is being updated
+    if (updateData.first_name || updateData.last_name) {
+      const firstName = updateData.first_name || admin.first_name;
+      const lastName = updateData.last_name || admin.last_name;
+      updateData.full_name = `${firstName} ${lastName}`;
+    }
+
+    // Apply updates to the document
+    Object.keys(updateData).forEach((key) => {
+      admin[key] = updateData[key];
+    });
+
+    // Save the updated document
+    const savedAdmin = await admin.save();
+
+    return savedAdmin;
   }
 
   async deleteAdmin(id: string) {
