@@ -6,5 +6,4 @@ export interface CustomerInterface extends Document {
   email: string;
   password: string;
   profile_image?: string;
-  // other fields...
 }

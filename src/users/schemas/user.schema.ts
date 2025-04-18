@@ -24,12 +24,6 @@ export class User extends Document {
   @Prop()
   full_name: string;
 
-  @Prop({ default: Date.now })
-  created_at: Date;
-
-  @Prop({ default: Date.now })
-  updated_at: Date;
-
   @Prop({ default: 'active', enum: ['active', 'suspended'] })
   status: string;
 

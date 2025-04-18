@@ -64,6 +64,12 @@ export class FeedbackController {
     return await this.feedbackService.getUserFeedback(user.user_id);
   }
 
+  @Get('service/:id')
+  async getServiceFeedback(@Param('id') id: string): Promise<Feedback[]> {
+    return await this.feedbackService.getAllFeedbackByServiceId(id);
+  }
+
+
   @Get(':id')
   @ApiOperation({ summary: 'Get feedback by ID' })
   async findOne(@Param('id') id: string): Promise<Feedback> {

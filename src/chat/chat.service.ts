@@ -27,7 +27,7 @@ export class ChatService {
   ): Promise<{ booking: ServiceBookings; providerId: Types.ObjectId }> {
     const booking = await this.bookingModel
       .findById(bookingId)
-      .populate('service_id')
+      .populate('service')
       .lean();
 
     if (!booking) {

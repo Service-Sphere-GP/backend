@@ -5,12 +5,10 @@ import { Document } from 'mongoose';
 
 export type ServiceProviderDocument = ServiceProvider & Document;
 
-@Schema() // Removed the timestamps option here
+@Schema()
 export class ServiceProvider extends User {
   @Prop()
   business_name: string;
-
-  // services field has been removed
 
   @Prop({
     type: String,
