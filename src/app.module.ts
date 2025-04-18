@@ -14,7 +14,6 @@ import { Feedback } from './feedback/schemas/feedback.schema';
 import { FeedbackModule } from './feedback/feedback.module';
 import { AdviceModule } from './advice/advice.module';
 import { ChatModule } from './chat/chat.module';
-import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -40,7 +39,6 @@ import { CategoriesModule } from './categories/categories.module';
     }),
     UserModule,
     ServicesModule,
-    CategoriesModule,
     AuthModule,
     ServiceBookingsModule,
     FeedbackModule,

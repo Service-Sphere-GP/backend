@@ -17,12 +17,13 @@ export class ServicesService {
     @InjectModel(ServiceProvider.name)
     private serviceProviderModel: Model<ServiceProvider>,
 
-    @InjectModel(Service.name)
+    @InjectModel(Service.name) 
     private serviceModel: Model<Service>,
 
     private readonly cloudinary: CloudinaryService,
     private readonly feedbackService: FeedbackService,
   ) {}
+
 
   async getAllServices(): Promise<ServiceInterface[]> {
     const services = await this.serviceModel
@@ -62,6 +63,7 @@ export class ServicesService {
     return savedService;
   }
 
+
   async deleteService(serviceId: string): Promise<ServiceInterface> {
     const service = await this.serviceModel.findById(serviceId);
     if (!service) {
@@ -83,6 +85,7 @@ export class ServicesService {
     const serviceObject = service.toObject();
     return serviceObject;
   }
+
 
   async updateService(
     serviceId: string,
@@ -106,16 +109,12 @@ export class ServicesService {
       imageUrls = uploadResults.map((result) => ({ url: result.url }));
     }
 
-    const { images, categories, ...restUpdateServiceDto } = updateServiceDto;
+    const { images, ...restUpdateServiceDto } = updateServiceDto;
 
     const updateData: Partial<Service> = {
       ...restUpdateServiceDto,
       service_provider: service.service_provider,
     };
-
-    if (categories && categories.length > 0) {
-      updateData.categories = categories.map((id) => new Types.ObjectId(id));
-    }
 
     if (imageUrls.length > 0) {
       updateData.images = imageUrls.map((image) => image.url);

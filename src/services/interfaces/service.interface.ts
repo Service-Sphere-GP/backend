@@ -6,8 +6,8 @@ export interface ServiceInterface {
   base_price: number;
   status: string;
   description?: string;
-  categories?: Types.ObjectId[];
+  category?: string;
   creation_time: Date;
-  images: string[];
+  images: string[]; // URLs of images after uploading to Cloudinary
   service_provider?: Types.ObjectId;
 }
