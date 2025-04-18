@@ -142,7 +142,10 @@ export class ServicesService {
   async getServiceById(serviceId: string): Promise<ServiceInterface> {
     const service = await this.serviceModel
       .findById(serviceId)
-      .populate('service_provider', 'full_name business_name rating_average profile_image')
+      .populate(
+        'service_provider',
+        'full_name business_name rating_average profile_image',
+      )
       .exec();
 
     if (!service) {
@@ -182,9 +185,63 @@ export class ServicesService {
         { rating_average: averageRating },
       );
 
+      await this.updateProviderRating(service.service_provider.toString());
+
       return true;
     } catch (error) {
       console.error(`Error updating service rating for ${serviceId}:`, error);
+      return false;
+    }
+  }
+
+  async calculateProviderAverageRating(providerId: string): Promise<number> {
+    try {
+      const services = await this.serviceModel
+        .find({
+          service_provider: providerId,
+        })
+        .exec();
+
+      if (!services || services.length === 0) {
+        return 0;
+      }
+
+      const totalRating = services.reduce(
+        (sum, service) => sum + (service.rating_average || 0),
+        0,
+      );
+
+      const averageRating = totalRating / services.length;
+      return Math.round(averageRating * 10) / 10;
+    } catch (error) {
+      console.error(
+        `Error calculating provider average rating for ${providerId}:`,
+        error,
+      );
+      return 0;
+    }
+  }
+
+  async updateProviderRating(providerId: string): Promise<boolean> {
+    try {
+      const provider = await this.serviceProviderModel.findById(providerId);
+      if (!provider) {
+        throw new NotFoundException(
+          `Service Provider with ID ${providerId} not found`,
+        );
+      }
+
+      const averageRating =
+        await this.calculateProviderAverageRating(providerId);
+
+      await this.serviceProviderModel.updateOne(
+        { _id: providerId },
+        { rating_average: averageRating },
+      );
+
+      return true;
+    } catch (error) {
+      console.error(`Error updating provider rating for ${providerId}:`, error);
       return false;
     }
   }
