@@ -12,14 +12,6 @@ import {
   Request,
 } from '@nestjs/common';
 import { ServicesService } from './services.service';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiConsumes,
-  ApiBearerAuth,
-  ApiParam,
-} from '@nestjs/swagger';
 import { ServiceDto } from './dto/service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { CreateServiceDto } from './dto/create-service.dto';
@@ -31,22 +23,11 @@ import { RolesGuard } from './../auth/guards/roles.guard';
 import { BlacklistedJwtAuthGuard } from './..//auth/guards/blacklisted-jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
-@ApiTags('Services')
 @Controller('services')
 export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 
   @Get()
-  @ApiOperation({
-    summary: 'Retrieve all services',
-    description: 'Returns a list of all available services in the system.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'List of services retrieved successfully',
-    type: [ServiceDto],
-  })
-  @ApiBearerAuth('access-token')
   @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
   @Roles('admin', 'service_provider', 'customer')
   async getAllServices(): Promise<ServiceInterface[]> {
@@ -54,21 +35,6 @@ export class ServicesController {
   }
 
   @Get('my-services')
-  @ApiOperation({
-    summary: 'Get all services of the logged-in user',
-    description:
-      'Returns all services created by the authenticated service provider.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'List of services retrieved successfully',
-    type: [ServiceDto],
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Forbidden - Not a service provider',
-  })
-  @ApiBearerAuth('access-token')
   @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
   @Roles('service_provider')
   async getMyServices(
@@ -78,23 +44,6 @@ export class ServicesController {
   }
 
   @Get('provider/:providerId')
-  @ApiOperation({
-    summary: 'Retrieve all services by a specific service provider',
-    description:
-      'Returns a list of services created by a specific service provider.',
-  })
-  @ApiParam({
-    name: 'providerId',
-    description: 'The ID of the service provider',
-    required: true,
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'List of services retrieved successfully',
-    type: [ServiceDto],
-  })
-  @ApiResponse({ status: 404, description: 'Service provider not found' })
-  @ApiBearerAuth('access-token')
   @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
   @Roles('admin', 'service_provider', 'customer')
   async getServicesByProviderId(
@@ -104,17 +53,6 @@ export class ServicesController {
   }
 
   @Get(':id')
-  @ApiOperation({
-    summary: 'Retrieve a service by ID',
-    description: 'Returns detailed information about a specific service.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'The service with the specified ID',
-    type: ServiceDto,
-  })
-  @ApiResponse({ status: 404, description: 'Service not found' })
-  @ApiBearerAuth('access-token')
   @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
   @Roles('admin', 'service_provider', 'customer')
   async getServiceById(@Param('id') id: string): Promise<ServiceInterface> {
@@ -123,18 +61,6 @@ export class ServicesController {
 
   @Post()
   @UseInterceptors(FilesInterceptor('images'))
-  @ApiConsumes('multipart/form-data')
-  @ApiOperation({
-    summary: 'Create a new service with images',
-    description:
-      'Creates a new service with the provided details and optional images. Requires admin or service provider role.',
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'The service has been successfully created.',
-    type: ServiceDto,
-  })
-  @ApiBearerAuth('access-token')
   @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
   @Roles('admin', 'service_provider')
   async createService(
@@ -149,39 +75,14 @@ export class ServicesController {
     );
   }
 
-  @ApiOperation({
-    summary: 'Delete a service by Id',
-    description:
-      'Deletes a service with the specified ID. Requires admin or service provider role.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'The service has been successfully deleted',
-    type: ServiceDto,
-  })
-  @ApiResponse({ status: 404, description: 'Service not found' })
-  @ApiBearerAuth('access-token')
+  @Delete(':id')
   @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
   @Roles('admin', 'service_provider')
-  @Delete(':id')
   async deleteService(@Param('id') id: string): Promise<ServiceInterface> {
     return this.servicesService.deleteService(id);
   }
 
   @Patch(':id')
-  @ApiConsumes('multipart/form-data')
-  @ApiOperation({
-    summary: 'Update a service',
-    description:
-      'Updates a service with the specified ID. Requires admin or service provider role.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'The service has been successfully updated',
-    type: ServiceDto,
-  })
-  @ApiResponse({ status: 404, description: 'Service not found' })
-  @ApiBearerAuth('access-token')
   @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
   @Roles('admin', 'service_provider')
   @UseInterceptors(FilesInterceptor('images'))
