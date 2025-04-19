@@ -139,7 +139,6 @@ export class FeedbackService {
       .find({ service: serviceId })
       .populate('user', 'first_name last_name profile_image')
       .populate('service', 'service_name')
-      .populate('se')
       .exec();
 
     if (!feedback) {
