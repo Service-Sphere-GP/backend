@@ -35,10 +35,26 @@ export class FeedbackController {
     return await this.feedbackService.findAll();
   }
 
-  @Get('user')
-  @UseGuards(BlacklistedJwtAuthGuard)
+  @Get('customer')
+  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @Roles('customer')
   async getUserFeedback(@CurrentUser() user: RequestUser): Promise<Feedback[]> {
     return await this.feedbackService.getUserFeedback(user.user_id);
+  }
+
+  @Get('customer/:id')
+  @UseGuards(BlacklistedJwtAuthGuard)
+  async getCustomerFeedbackById(@Param('id') id: string): Promise<Feedback[]> {
+    return await this.feedbackService.getCustomerFeedbackById(id);
+  }
+
+  @Get('provider')
+  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @Roles('service_provider')
+  async getMyServiceFeedback(
+    @CurrentUser() user: RequestUser,
+  ): Promise<Feedback[]> {
+    return await this.feedbackService.getServiceProviderFeedback(user.user_id);
   }
 
   @Get('provider/:id')

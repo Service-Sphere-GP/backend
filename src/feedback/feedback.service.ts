@@ -151,7 +151,18 @@ export class FeedbackService {
   async getUserFeedback(userId: string): Promise<Feedback[]> {
     return await this.feedbackModel
       .find({ user: userId })
-      .populate('service', 'name')
+      .populate('service', 'service_name')
+      .populate('booking')
+      .exec();
+  }
+
+  async getCustomerFeedbackById(customerId: string): Promise<Feedback[]> {
+    if (!Types.ObjectId.isValid(customerId)) {
+      throw new BadRequestException('Invalid customer ID format');
+    }
+
+    return await this.feedbackModel
+      .find({ user: customerId })
       .populate('service', 'service_name')
       .populate('booking')
       .exec();
@@ -170,7 +181,6 @@ export class FeedbackService {
     }
 
     const serviceIds = services.map((service) => service._id.toString());
-
 
     const feedback = await this.feedbackModel
       .find({
