@@ -123,9 +123,7 @@ export class FeedbackService {
       throw new ForbiddenException('You can only delete your own feedback');
     }
 
-
     const serviceId = feedback.service;
-
 
     await this.feedbackModel.findByIdAndDelete(id).exec();
 
@@ -157,6 +155,35 @@ export class FeedbackService {
       .populate('service', 'service_name')
       .populate('booking')
       .exec();
+  }
+
+  async getServiceProviderFeedback(providerId: string): Promise<Feedback[]> {
+    if (!Types.ObjectId.isValid(providerId)) {
+      throw new BadRequestException('Invalid service provider ID format');
+    }
+
+    const services =
+      await this.servicesService.getAllServicesByProviderId(providerId);
+
+    if (!services || services.length === 0) {
+      return [];
+    }
+
+    const serviceIds = services.map((service) => service._id.toString());
+
+
+    const feedback = await this.feedbackModel
+      .find({
+        service: {
+          $in: serviceIds,
+        },
+      })
+      .populate('user', 'first_name last_name profile_image')
+      .populate('service', 'service_name')
+      .populate('booking')
+      .exec();
+
+    return feedback;
   }
 
   async calculateAverageRating(serviceId: string): Promise<number> {
