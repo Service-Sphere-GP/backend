@@ -15,6 +15,7 @@ import { Service, ServiceSchema } from '../services/schemas/service.schema';
 import { User, UserSchema } from '../users/schemas/user.schema';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ConfigService } from '@nestjs/config';
     forwardRef(() => UserModule),
     forwardRef(() => ServiceBookingsModule),
     forwardRef(() => ServicesModule),
+    forwardRef(() => NotificationsModule),
   ],
   providers: [ChatGateway, ChatService, JwtService, ConfigService],
   exports: [ChatService, ChatGateway],

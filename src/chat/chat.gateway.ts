@@ -10,13 +10,19 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { ChatService } from './chat.service';
-import { Logger, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+  Logger,
+  UseGuards,
+  UsePipes,
+  ValidationPipe,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
-import { CreateMessageDto } from './dto/create-message.dto';
-import { JoinRoomDto } from './dto/join-room.dto';
 import { WsJwtGuard } from './guards/ws-jwt.guard';
+import { NotificationService } from '../notifications/notifications.service';
 
 @UsePipes(new ValidationPipe())
 @WebSocketGateway({
@@ -30,12 +36,15 @@ export class ChatGateway
   @WebSocketServer() server: Server;
   private logger: Logger = new Logger('ChatGateway');
   private wsJwtGuard: WsJwtGuard;
+  private userSocketMap = new Map<string, string[]>();
 
   constructor(
     private readonly chatService: ChatService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly usersService: UsersService,
+    @Inject(forwardRef(() => NotificationService))
+    private readonly notificationService: NotificationService,
   ) {
     this.wsJwtGuard = new WsJwtGuard(jwtService, configService, usersService);
   }
@@ -53,9 +62,35 @@ export class ChatGateway
       if (!canActivate) {
         this.logger.warn(`Disconnecting unauthenticated client: ${client.id}`);
       } else {
+        const userId = client.data.user?.userId;
         this.logger.log(
-          `Client authenticated: ${client.id}, User ID: ${client.data.user?.userId}`,
+          `Client authenticated: ${client.id}, User ID: ${userId}`,
         );
+        if (userId) {
+          const userSockets = this.userSocketMap.get(userId) || [];
+          userSockets.push(client.id);
+          this.userSocketMap.set(userId, userSockets);
+
+          const notificationRoom = `notifications_${userId}`;
+          client.join(notificationRoom);
+          this.logger.log(
+            `User ${userId} joined notification room: ${notificationRoom}`,
+          );
+          try {
+            const unreadNotifications =
+              await this.notificationService.getUserUnreadNotifications(userId);
+            if (unreadNotifications.length > 0) {
+              this.logger.log(
+                `Sending ${unreadNotifications.length} unread notifications to user ${userId}`,
+              );
+              client.emit('unreadNotifications', unreadNotifications);
+            }
+          } catch (error) {
+            this.logger.error(
+              `Error fetching unread notifications for user ${userId}: ${error.message}`,
+            );
+          }
+        }
       }
     } catch (e) {
       this.logger.error(`Authentication error for ${client.id}: ${e.message}`);
@@ -65,6 +100,46 @@ export class ChatGateway
 
   handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
+    const userId = client.data?.user?.userId;
+    if (userId) {
+      const userSockets = this.userSocketMap.get(userId) || [];
+      const updatedSockets = userSockets.filter(
+        (socketId) => socketId !== client.id,
+      );
+
+      if (updatedSockets.length > 0) {
+        this.userSocketMap.set(userId, updatedSockets);
+      } else {
+        this.userSocketMap.delete(userId);
+      }
+    }
+  }
+
+  sendNotificationToUser(userId: string, notification: any): void {
+    const notificationRoom = `notifications_${userId}`;
+    this.server.to(notificationRoom).emit('notification', notification);
+    this.logger.log(`Notification sent to user ${userId}`);
+  }
+
+  isUserOnline(userId: string): boolean {
+    return (
+      this.userSocketMap.has(userId) &&
+      this.userSocketMap.get(userId).length > 0
+    );
+  }
+
+  @UseGuards(WsJwtGuard)
+  @SubscribeMessage('subscribeToNotifications')
+  handleSubscribeToNotifications(@ConnectedSocket() client: Socket): void {
+    const userId = client.data.user.userId;
+    const notificationRoom = `notifications_${userId}`;
+
+    client.join(notificationRoom);
+    this.logger.log(`User ${userId} subscribed to notifications`);
+    client.emit('notificationSubscription', {
+      success: true,
+      message: 'Subscribed to notifications',
+    });
   }
 
   @SubscribeMessage('test')
