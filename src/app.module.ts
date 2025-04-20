@@ -14,7 +14,6 @@ import { FeedbackModule } from './feedback/feedback.module';
 import { AdviceModule } from './advice/advice.module';
 import { ChatModule } from './chat/chat.module';
 import { CategoriesModule } from './categories/categories.module';
-import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -46,7 +45,6 @@ import { NotificationsModule } from './notifications/notifications.module';
     FeedbackModule,
     AdviceModule,
     ChatModule,
-    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
