@@ -1,7 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, forwardRef, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Notification } from './schemas/notification.schema';
+import { ChatGateway } from '../chat/chat.gateway';
 
 @Injectable()
 export class NotificationService {
@@ -10,6 +11,8 @@ export class NotificationService {
   constructor(
     @InjectModel(Notification.name)
     private notificationModel: Model<Notification>,
+    @Inject(forwardRef(() => ChatGateway))
+    private readonly chatGateway: ChatGateway,
   ) {}
 
   async createNotification(notificationData: {
@@ -52,6 +55,23 @@ export class NotificationService {
       this.logger.log(
         `Created notification ${savedNotification._id} for user ${recipientId}`,
       );
+
+      const recipientIdString = recipientId.toString();
+      if (this.chatGateway.isUserOnline(recipientIdString)) {
+        const notificationToSend = savedNotification.toObject();
+        this.chatGateway.sendNotificationToUser(
+          recipientIdString,
+          notificationToSend,
+        );
+        this.logger.log(
+          `Real-time notification sent to user ${recipientIdString}`,
+        );
+      } else {
+        this.logger.log(
+          `User ${recipientIdString} is offline, notification will be delivered when they connect`,
+        );
+      }
+
       return savedNotification;
     } catch (error) {
       this.logger.error(
