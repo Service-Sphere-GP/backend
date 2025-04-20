@@ -10,7 +10,6 @@ import { ServicesModule } from '../services/services.module';
 import { BookingsController } from './service-bookings.controller';
 import { BookingsService } from './service-bookings.service';
 import { UserModule } from 'src/users/user.module';
-import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -20,8 +19,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     ]),
     AuthModule,
     forwardRef(() => ServicesModule),
-    forwardRef(() => UserModule),
-    NotificationsModule,
+    forwardRef(() => UserModule)
   ],
   controllers: [BookingsController],
   providers: [BookingsService],

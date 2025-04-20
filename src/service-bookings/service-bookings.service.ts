@@ -9,8 +9,6 @@ import { Model, Types } from 'mongoose';
 import { ServiceBookings } from './schemas/service-booking.schema';
 import { ServicesService } from '../services/services.service';
 import { UsersService } from './../users/users.service';
-import { NotificationService } from '../notifications/notifications.service';
-
 @Injectable()
 export class BookingsService {
   constructor(
@@ -18,7 +16,6 @@ export class BookingsService {
     private bookingModel: Model<ServiceBookings>,
     private readonly servicesService: ServicesService,
     private readonly UsersService: UsersService,
-    private readonly notificationService: NotificationService,
   ) {}
 
   async createBooking(
@@ -38,15 +35,11 @@ export class BookingsService {
         throw new NotFoundException('Service not found');
       }
 
-      const providerId = service.service_provider?._id.toString();
-      const provider = await this.UsersService.findById(providerId);
+      const provider = await this.UsersService.findById(
+        service.service_provider?._id.toString(),
+      );
       if (!provider) {
         throw new NotFoundException('Service provider not available');
-      }
-
-      const customer = await this.UsersService.findById(customerId);
-      if (!customer) {
-        throw new NotFoundException('Customer not found');
       }
 
       const booking = new this.bookingModel({
@@ -56,16 +49,6 @@ export class BookingsService {
       });
 
       const savedBooking = await booking.save();
-
-      await this.notificationService.createNotification({
-        title: 'New Service Booking',
-        message: `${customer.full_name} has booked your service "${service.service_name}".`,
-        recipient: providerId,
-        type: 'booking',
-        booking_id: savedBooking._id,
-        service_id: serviceId,
-      });
-
       return savedBooking;
     } catch (error) {
       if (
@@ -138,51 +121,8 @@ export class BookingsService {
         );
       }
 
-      if (booking.status === status) {
-        return booking;
-      }
-
       booking.status = status;
       const updatedBooking = await booking.save();
-
-      const service = await this.servicesService.getServiceById(
-        booking.service.toString(),
-      );
-      const customer = await this.UsersService.findById(
-        booking.customer.toString(),
-      );
-      const providerId = service.service_provider?._id.toString();
-      const customerMessages = {
-        pending: `Your booking for "${service.service_name}" is pending confirmation.`,
-        confirmed: `Your booking for "${service.service_name}" has been confirmed.`,
-        completed: `Your booking for "${service.service_name}" has been marked as completed.`,
-        cancelled: `Your booking for "${service.service_name}" has been cancelled.`,
-      };
-
-      const providerMessages = {
-        pending: `Booking for "${service.service_name}" by ${customer.full_name} is pending.`,
-        confirmed: `You've confirmed the booking for "${service.service_name}" by ${customer.full_name}.`,
-        completed: `You've marked the booking for "${service.service_name}" by ${customer.full_name} as completed.`,
-        cancelled: `The booking for "${service.service_name}" by ${customer.full_name} has been cancelled.`,
-      };
-
-      await this.notificationService.createNotification({
-        title: `Booking Status Update: ${status}`,
-        message: customerMessages[status],
-        recipient: booking.customer.toString(),
-        type: 'status_change',
-        booking_id: bookingId,
-        service_id: booking.service.toString(),
-      });
-
-      await this.notificationService.createNotification({
-        title: `Booking Status Update: ${status}`,
-        message: providerMessages[status],
-        recipient: providerId,
-        type: 'status_change',
-        booking_id: bookingId,
-        service_id: booking.service.toString(),
-      });
 
       return updatedBooking;
     } catch (error) {
