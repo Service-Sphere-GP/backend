@@ -5,9 +5,11 @@ import {
   IsArray,
   IsOptional,
   IsObject,
+  IsMongoId,
 } from 'class-validator';
 
 export class UpdateServiceDto {
+  @IsOptional()
   @IsString()
   service_name?: string;
 
@@ -31,10 +33,20 @@ export class UpdateServiceDto {
   description?: string;
 
   @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch (e) {
+        return [value];
+      }
+    }
+    return value;
+  })
   @IsArray()
-  @IsString({ each: true })
+  @IsMongoId({ each: true })
   categories?: string[];
-  
+
   @IsOptional()
   @IsArray()
   images?: Express.Multer.File[];

@@ -28,6 +28,7 @@ export class ServicesService {
     const services = await this.serviceModel
       .find()
       .populate('service_provider', 'full_name business_name rating_average')
+      .populate('categories', 'name')
       .exec();
     return services;
   }
@@ -44,7 +45,8 @@ export class ServicesService {
         }),
       ),
     );
-    const { ...serviceData } = createServiceDto;
+
+    const { categories, ...serviceData } = createServiceDto;
     const serviceProvider = await this.serviceProviderModel.findById(userId);
     if (!serviceProvider) {
       throw new NotFoundException(
@@ -52,8 +54,13 @@ export class ServicesService {
       );
     }
 
+    const categoriesArray = categories
+      ? categories.map((id) => new Types.ObjectId(id))
+      : [];
+
     const newService = await this.serviceModel.create({
       ...serviceData,
+      categories: categoriesArray,
       service_provider: userId,
       images: imageUrls.map((image) => image.url),
     });
@@ -146,6 +153,7 @@ export class ServicesService {
         'service_provider',
         'full_name business_name rating_average profile_image',
       )
+      .populate('categories', 'name')
       .exec();
 
     if (!service) {

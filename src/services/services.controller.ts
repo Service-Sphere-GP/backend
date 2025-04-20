@@ -12,7 +12,6 @@ import {
   Request,
 } from '@nestjs/common';
 import { ServicesService } from './services.service';
-import { ServiceDto } from './dto/service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { ServiceInterface } from './interfaces/service.interface';
@@ -22,10 +21,20 @@ import { Roles } from './../common/decorators/roles.decorators';
 import { RolesGuard } from './../auth/guards/roles.guard';
 import { BlacklistedJwtAuthGuard } from './..//auth/guards/blacklisted-jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { CategoriesService } from '../categories/categories.service';
 
 @Controller('services')
 export class ServicesController {
-  constructor(private readonly servicesService: ServicesService) {}
+  constructor(
+    private readonly servicesService: ServicesService,
+    private readonly categoriesService: CategoriesService,
+  ) {}
+
+  @Get('categories')
+  @UseGuards(BlacklistedJwtAuthGuard)
+  async getCategories() {
+    return this.categoriesService.findAll();
+  }
 
   @Get()
   @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)

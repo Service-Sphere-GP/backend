@@ -6,7 +6,7 @@ export class ServiceDto {
   base_price: number;
   status: string;
   description?: string;
-  category?: string;
+  categories?: Types.ObjectId[];
   creation_time: Date;
   images: string[];
   service_provider?: Types.ObjectId;

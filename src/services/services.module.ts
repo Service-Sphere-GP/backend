@@ -6,6 +6,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Service, ServiceSchema } from './schemas/service.schema';
 import { ServiceBookingsModule } from '../service-bookings/service-bookings.module';
 import { FeedbackModule } from '../feedback/feedback.module';
+import { CategoriesModule } from '../categories/categories.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { FeedbackModule } from '../feedback/feedback.module';
     MongooseModule.forFeature([{ name: Service.name, schema: ServiceSchema }]),
     forwardRef(() => ServiceBookingsModule),
     FeedbackModule,
+    CategoriesModule,
   ],
   controllers: [ServicesController],
   providers: [ServicesService],

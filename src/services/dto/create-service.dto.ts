@@ -5,6 +5,7 @@ import {
   IsArray,
   IsOptional,
   IsObject,
+  IsMongoId,
 } from 'class-validator';
 
 export class CreateServiceDto {
@@ -28,8 +29,19 @@ export class CreateServiceDto {
   description?: string;
 
   @IsOptional()
-  @IsString()
-  category?: string;
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch (e) {
+        return [value];
+      }
+    }
+    return value;
+  })
+  @IsArray()
+  @IsMongoId({ each: true })
+  categories?: string[];
 
   @IsOptional()
   @IsArray()
