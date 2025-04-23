@@ -186,7 +186,7 @@ export class BookingsService {
       const customer = await this.UsersService.findById(
         booking.customer.toString(),
       );
-      const providerId = service.service_provider?._id.toString();
+
       const customerMessages = {
         pending: `Your booking for "${service.service_name}" is pending confirmation.`,
         confirmed: `Your booking for "${service.service_name}" has been confirmed.`,
@@ -194,26 +194,10 @@ export class BookingsService {
         cancelled: `Your booking for "${service.service_name}" has been cancelled.`,
       };
 
-      const providerMessages = {
-        pending: `Booking for "${service.service_name}" by ${customer.full_name} is pending.`,
-        confirmed: `You've confirmed the booking for "${service.service_name}" by ${customer.full_name}.`,
-        completed: `You've marked the booking for "${service.service_name}" by ${customer.full_name} as completed.`,
-        cancelled: `The booking for "${service.service_name}" by ${customer.full_name} has been cancelled.`,
-      };
-
       await this.notificationService.createNotification({
         title: `Booking Status Update: ${status}`,
         message: customerMessages[status],
         recipient: booking.customer.toString(),
-        type: 'status_change',
-        booking_id: bookingId,
-        service_id: booking.service.toString(),
-      });
-
-      await this.notificationService.createNotification({
-        title: `Booking Status Update: ${status}`,
-        message: providerMessages[status],
-        recipient: providerId,
         type: 'status_change',
         booking_id: bookingId,
         service_id: booking.service.toString(),
