@@ -116,6 +116,41 @@ export class BookingsService {
     }
   }
 
+  async getBookingById(bookingId: string): Promise<ServiceBookings> {
+    try {
+      if (!Types.ObjectId.isValid(bookingId)) {
+        throw new BadRequestException('Invalid booking ID format');
+      }
+
+      const booking = await this.bookingModel
+        .findById(bookingId)
+        .populate({
+          path: 'service',
+          populate: {
+            path: 'service_provider',
+            select: 'full_name profile_image',
+          },
+        })
+        .populate('customer', 'full_name email profile_image')
+        .exec();
+
+      if (!booking) {
+        throw new NotFoundException(`Booking with ID ${bookingId} not found`);
+      }
+
+      return booking;
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+      console.error('Fetching booking error:', error);
+      throw new InternalServerErrorException('Failed to retrieve booking');
+    }
+  }
+
   async updateBookingStatus(
     bookingId: string,
     status: string,

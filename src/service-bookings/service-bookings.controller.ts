@@ -90,4 +90,17 @@ export class BookingsController {
       throw new BadRequestException(error.message);
     }
   }
+
+  @Get(':id')
+  @UseGuards(BlacklistedJwtAuthGuard)
+  async getBookingById(@Param('id') id: string) {
+    try {
+      return await this.bookingService.getBookingById(id);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException(error.message);
+    }
+  }
 }
