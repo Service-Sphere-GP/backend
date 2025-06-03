@@ -22,3 +22,5 @@ export class Feedback extends Document {
 export const FeedbackSchema = SchemaFactory.createForClass(Feedback);
 
 FeedbackSchema.index({ user: 1, booking: 1 }, { unique: true });
+FeedbackSchema.index({ service: 1, createdAt: -1 });
+FeedbackSchema.index({ user: 1, createdAt: -1 });

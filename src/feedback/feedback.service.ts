@@ -91,6 +91,7 @@ export class FeedbackService {
       .populate('user', 'first_name last_name profile_image')
       .populate('service', 'service_name')
       .populate('service', 'name')
+      .lean()
       .exec();
   }
 
