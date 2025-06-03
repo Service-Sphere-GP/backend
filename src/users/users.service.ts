@@ -279,4 +279,22 @@ export class UsersService {
   async deleteAdmin(id: string) {
     return this.userModel.findByIdAndDelete(id).exec();
   }
+
+  async findByBusinessName(businessName: string): Promise<User | null> {
+    return this.userModel
+      .findOne({
+        business_name: businessName,
+        role: 'service_provider',
+      })
+      .exec();
+  }
+
+  async findByTaxId(taxId: string): Promise<User | null> {
+    return this.userModel
+      .findOne({
+        tax_id: taxId,
+        role: 'service_provider',
+      })
+      .exec();
+  }
 }
