@@ -2,33 +2,30 @@ import {
   Controller,
   Post,
   Body,
-  UnauthorizedException,
   Headers,
   BadRequestException,
   Param,
-  UseGuards,
   Patch,
+  Get,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateCustomerDto } from './../users/dto/create-customer.dto';
 import { CreateServiceProviderDto } from './../users/dto/create-service-provider.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
-
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { CurrentUser } from './../common/decorators/current-user.decorator';
 import { OtpService } from './otp.service';
 import { CreateAdminDto } from '../users/dto/create-admin.dto';
+import { UsersService } from '../users/users.service';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private authService: AuthService,
-    private otpService: OtpService,
+    private usersService: UsersService,
   ) {}
 
   @Post('register/customer')
@@ -84,13 +81,42 @@ export class AuthController {
   }
 
   @Post('verify-email/:userId')
-  async verifyEmail(
+  async verifyEmailWithUserId(
     @Param('userId') userId: string,
     @Body() body: { otp: string },
   ) {
-    console.log('body', body);
-    console.log('userId', userId);
-    return this.authService.verifyEmail(userId, body.otp);
+    try {
+      await this.authService.verifyEmail(userId, body.otp);
+      return {
+        message:
+          'Email verified successfully. You can now log in to your account.',
+        verified: true,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Get('verification-status/:email')
+  async getVerificationStatus(@Param('email') email: string) {
+    try {
+      const user = await this.usersService.findByEmail(email);
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      return {
+        email: user.email,
+        email_verified: user.email_verified,
+        user_id: user._id,
+        role: user.role,
+        message: user.email_verified
+          ? 'Email is already verified'
+          : 'Email verification required',
+      };
+    } catch (error) {
+      throw error;
+    }
   }
 
   @Post('resend-verification')

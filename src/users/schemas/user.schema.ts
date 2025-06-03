@@ -44,6 +44,8 @@ export class User extends Document {
 
   @Prop({ default: true })
   emailSent: boolean;
+
+  role: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

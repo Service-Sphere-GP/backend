@@ -96,7 +96,6 @@ export class AuthService {
   async registerServiceProvider(
     createServiceProviderDto: CreateServiceProviderDto,
   ) {
-
     const existingUser = await this.usersService.findByEmail(
       createServiceProviderDto.email,
     );
@@ -227,6 +226,17 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
+    // Check if user's email is verified before allowing login
+    if (!user._doc.email_verified) {
+      throw new ForbiddenException({
+        message:
+          'Email verification required. Please verify your email before logging in.',
+        code: 'EMAIL_NOT_VERIFIED',
+        email: user._doc.email,
+        userId: user._doc._id,
+      });
+    }
+
     const tokens = await this.generateTokens(user._doc);
     return {
       accessToken: tokens.accessToken,
@@ -245,6 +255,19 @@ export class AuthService {
     const user = await this.usersService.findById(tokenData.userId.toString());
     if (!user) {
       throw new UnauthorizedException('User not found');
+    }
+
+    // Check if user's email is verified before refreshing tokens
+    if (!user.email_verified) {
+      // Revoke the refresh token since user is not verified
+      await this.refreshTokenService.revokeToken(refreshToken);
+      throw new ForbiddenException({
+        message:
+          'Email verification required. Please verify your email before accessing the platform.',
+        code: 'EMAIL_NOT_VERIFIED',
+        email: user.email,
+        userId: user._id,
+      });
     }
 
     // Revoke the used refresh token
@@ -440,6 +463,22 @@ export class AuthService {
         );
       }
     }
+  }
+
+  async checkUserAccess(userId: string): Promise<User> {
+    const user = await this.usersService.findById(userId);
+
+    if (!user.email_verified && user.role !== 'admin') {
+      throw new ForbiddenException({
+        message:
+          'Email verification required. Please verify your email to access this resource.',
+        code: 'EMAIL_NOT_VERIFIED',
+        email: user.email,
+        userId: user._id,
+      });
+    }
+
+    return user;
   }
 
   async registerAdmin(apiKey: string, createAdminDto: CreateAdminDto) {

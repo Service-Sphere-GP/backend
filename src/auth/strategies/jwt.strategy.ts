@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { JwtPayload } from './../interfaces/jwt-payload.interface';
@@ -23,10 +27,23 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new UnauthorizedException();
     }
+
+    // Enforce email verification for non-admin users
+    if (!user.email_verified && user.role !== 'admin') {
+      throw new ForbiddenException({
+        message:
+          'Email verification required. Please verify your email to access this resource.',
+        code: 'EMAIL_NOT_VERIFIED',
+        email: user.email,
+        userId: user._id,
+      });
+    }
+
     return {
       user_id: payload.sub,
       email: payload.email,
       role: payload.role,
+      email_verified: user.email_verified,
     };
   }
 }
