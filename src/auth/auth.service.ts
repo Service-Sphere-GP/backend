@@ -15,7 +15,7 @@ import { CloudinaryService } from 'nestjs-cloudinary';
 import { Express } from 'express';
 import * as crypto from 'crypto';
 import { PasswordResetTokensService } from './password-reset-token.service';
-import { TokenBlacklistService } from './token-blacklist.service';
+import { RefreshTokenService } from './refresh-token.service';
 import { MailService } from './../mail/mail.service';
 import { OtpService } from './otp.service';
 import { User } from './../users/schemas/user.schema';
@@ -34,7 +34,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private passwordResetTokenService: PasswordResetTokensService,
-    private tokenBlacklistService: TokenBlacklistService,
+    private refreshTokenService: RefreshTokenService,
     private mailService: MailService,
     private otpService: OtpService,
     @InjectModel(User.name) private userModel: Model<User>,
@@ -145,6 +145,34 @@ export class AuthService {
     return userData;
   }
 
+  async generateTokens(user: any) {
+    const payload: JwtPayload = {
+      sub: user._id,
+      email: user.email,
+      role: user.role,
+    };
+
+    const accessToken = await this.jwtService.sign(payload, {
+      expiresIn:
+        this.configService.get('JWT_ACCESS_TOKEN_EXPIRATION_TIME') || '15m',
+      secret: this.configService.get('JWT_SECRET'),
+    });
+
+    // Create refresh token with longer expiration (7 days)
+    const refreshTokenExpiry = new Date();
+    refreshTokenExpiry.setDate(refreshTokenExpiry.getDate() + 7);
+
+    const refreshToken = await this.refreshTokenService.createRefreshToken(
+      user._id.toString(),
+      refreshTokenExpiry,
+    );
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+
   async generateToken(user: any) {
     const payload: JwtPayload = {
       sub: user._id,
@@ -153,8 +181,9 @@ export class AuthService {
     };
 
     const token = await this.jwtService.sign(payload, {
-      expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME,
-      secret: process.env.JWT_SECRET,
+      expiresIn:
+        this.configService.get('JWT_ACCESS_TOKEN_EXPIRATION_TIME') || '15m',
+      secret: this.configService.get('JWT_SECRET'),
     });
 
     return token;
@@ -165,25 +194,49 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
     }
-    const token = await this.generateToken(user._doc);
-    return { token, user: user._doc };
+
+    const tokens = await this.generateTokens(user._doc);
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user: user._doc,
+    };
   }
 
-  async logout(token: string) {
+  async refreshTokens(refreshToken: string) {
+    const tokenData = await this.refreshTokenService.findByToken(refreshToken);
+
+    if (!tokenData) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    const user = await this.usersService.findById(tokenData.userId.toString());
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Revoke the used refresh token
+    await this.refreshTokenService.revokeToken(refreshToken);
+
+    // Generate new tokens
+    const tokens = await this.generateTokens(user);
+
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
+  }
+
+  async logout(refreshToken?: string) {
     try {
-      const decoded = await this.jwtService.verify(token, {
-        secret: process.env.JWT_SECRET,
-      });
-
-      const expiresAt = new Date(decoded.exp * 1000);
-
-      await this.tokenBlacklistService.blacklistToken(token, expiresAt);
-
-      await this.tokenBlacklistService.removeExpiredTokens();
-
+      if (refreshToken) {
+        await this.refreshTokenService.revokeToken(refreshToken);
+        return 'Successfully logged out';
+      }
       return 'Successfully logged out';
     } catch (error) {
-      throw new UnauthorizedException('Invalid token');
+      // Even if token revocation fails, we still consider logout successful
+      return 'Successfully logged out';
     }
   }
 
