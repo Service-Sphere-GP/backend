@@ -50,21 +50,23 @@ export class AuthService {
       throw new BadRequestException('Email already exists');
     }
 
+    const session = await this.userModel.db.startSession();
+    session.startTransaction();
+
     try {
       const customerData = {
         ...createCustomerDto,
         role: 'customer',
         profile_image: this.DEFAULT_PROFILE_IMAGE,
       };
+
       const customer = await this.usersService.createCustomer(customerData);
 
       const otp = this.otpService.generateOtp();
 
-      try {
-        await this.otpService.saveOtp(customer.id, otp);
-      } catch (error) {
-        throw new BadRequestException('Failed to save OTP');
-      }
+      await this.otpService.saveOtp(customer.id, otp);
+
+      await session.commitTransaction();
 
       try {
         await this.mailService.sendWelcomeEmail(
@@ -72,21 +74,29 @@ export class AuthService {
           customer.first_name,
           otp,
         );
+        customer.emailSent = true;
       } catch (error) {
         console.log('Error sending email:', error);
         customer.emailSent = false;
+
+        await this.userModel.findByIdAndUpdate(customer.id, {
+          emailSent: false,
+        });
       }
 
-      customer.emailSent = customer.emailSent === false ? false : true;
       return customer;
     } catch (error) {
+      await session.abortTransaction();
       throw new BadRequestException('Failed to create customer');
+    } finally {
+      session.endSession();
     }
   }
 
   async registerServiceProvider(
     createServiceProviderDto: CreateServiceProviderDto,
   ) {
+
     const existingUser = await this.usersService.findByEmail(
       createServiceProviderDto.email,
     );
@@ -94,22 +104,38 @@ export class AuthService {
       throw new BadRequestException('Email already exists');
     }
 
+    const existingBusinessName = await this.usersService.findByBusinessName(
+      createServiceProviderDto.business_name,
+    );
+    if (existingBusinessName) {
+      throw new BadRequestException('Business name already exists');
+    }
+
+    const existingTaxId = await this.usersService.findByTaxId(
+      createServiceProviderDto.tax_id,
+    );
+    if (existingTaxId) {
+      throw new BadRequestException('Tax ID already exists');
+    }
+
+    const session = await this.userModel.db.startSession();
+    session.startTransaction();
+
     try {
       const serviceProviderData = {
         ...createServiceProviderDto,
         role: 'service_provider',
         profile_image: this.DEFAULT_PROFILE_IMAGE,
       };
+
       const serviceProvider =
         await this.usersService.createServiceProvider(serviceProviderData);
 
       const otp = this.otpService.generateOtp();
 
-      try {
-        await this.otpService.saveOtp(serviceProvider.id, otp);
-      } catch (error) {
-        throw new BadRequestException('Failed to save OTP');
-      }
+      await this.otpService.saveOtp(serviceProvider.id, otp);
+
+      await session.commitTransaction();
 
       try {
         await this.mailService.sendWelcomeEmail(
@@ -117,16 +143,22 @@ export class AuthService {
           serviceProvider.first_name,
           otp,
         );
+        serviceProvider.emailSent = true;
       } catch (error) {
         console.log('Error sending email:', error);
         serviceProvider.emailSent = false;
+
+        await this.userModel.findByIdAndUpdate(serviceProvider.id, {
+          emailSent: false,
+        });
       }
 
-      serviceProvider.emailSent =
-        serviceProvider.emailSent === false ? false : true;
       return serviceProvider;
     } catch (error) {
+      await session.abortTransaction();
       throw new BadRequestException('Failed to create service provider');
+    } finally {
+      session.endSession();
     }
   }
 
