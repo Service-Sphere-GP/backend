@@ -39,6 +39,9 @@ export class User extends Document {
   @Prop()
   email_verification_expires: Date;
 
+  @Prop({ default: 0 })
+  otp_attempts: number;
+
   @Prop({ default: true })
   emailSent: boolean;
 }
