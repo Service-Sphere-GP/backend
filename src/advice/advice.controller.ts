@@ -4,7 +4,7 @@ import {
   UseGuards,
   BadRequestException,
 } from '@nestjs/common';
-import { BlacklistedJwtAuthGuard } from '../auth/guards/blacklisted-jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorators';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -15,7 +15,7 @@ export class AdviceController {
   constructor(private readonly adviceService: AdviceService) {}
 
   @Get('me')
-  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('service_provider')
   async getAdvice(@CurrentUser() user: any) {
     try {

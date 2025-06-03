@@ -19,7 +19,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 
 import { Roles } from './../common/decorators/roles.decorators';
 import { RolesGuard } from './../auth/guards/roles.guard';
-import { BlacklistedJwtAuthGuard } from './..//auth/guards/blacklisted-jwt-auth.guard';
+import { JwtAuthGuard } from './../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { CategoriesService } from '../categories/categories.service';
 
@@ -31,20 +31,20 @@ export class ServicesController {
   ) {}
 
   @Get('categories')
-  @UseGuards(BlacklistedJwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async getCategories() {
     return this.categoriesService.findAll();
   }
 
   @Get()
-  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'service_provider', 'customer')
   async getAllServices(): Promise<ServiceInterface[]> {
     return this.servicesService.getAllServices();
   }
 
   @Get('my-services')
-  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('service_provider')
   async getMyServices(
     @CurrentUser() currentUser: any,
@@ -53,7 +53,7 @@ export class ServicesController {
   }
 
   @Get('provider/:providerId')
-  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'service_provider', 'customer')
   async getServicesByProviderId(
     @Param('providerId') providerId: string,
@@ -62,7 +62,7 @@ export class ServicesController {
   }
 
   @Get(':id')
-  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'service_provider', 'customer')
   async getServiceById(@Param('id') id: string): Promise<ServiceInterface> {
     return this.servicesService.getServiceById(id);
@@ -70,7 +70,7 @@ export class ServicesController {
 
   @Post()
   @UseInterceptors(FilesInterceptor('images'))
-  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'service_provider')
   async createService(
     @Body() createServiceDto: CreateServiceDto,
@@ -85,14 +85,14 @@ export class ServicesController {
   }
 
   @Delete(':id')
-  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'service_provider')
   async deleteService(@Param('id') id: string): Promise<ServiceInterface> {
     return this.servicesService.deleteService(id);
   }
 
   @Patch(':id')
-  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'service_provider')
   @UseInterceptors(FilesInterceptor('images'))
   async updateService(

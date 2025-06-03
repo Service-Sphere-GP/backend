@@ -8,12 +8,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { NotificationService } from './notifications.service';
-import { BlacklistedJwtAuthGuard } from '../auth/guards/blacklisted-jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Notification } from './schemas/notification.schema';
 
 @Controller('notifications')
-@UseGuards(BlacklistedJwtAuthGuard)
+@UseGuards(JwtAuthGuard)
 export class NotificationsController {
   constructor(private readonly notificationService: NotificationService) {}
 

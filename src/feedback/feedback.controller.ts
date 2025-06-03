@@ -10,7 +10,7 @@ import {
 import { FeedbackService } from './feedback.service';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
 import { Feedback } from './schemas/feedback.schema';
-import { BlacklistedJwtAuthGuard } from './../auth/guards/blacklisted-jwt-auth.guard';
+import { JwtAuthGuard } from './../auth/guards/jwt-auth.guard';
 import { Roles } from './../common/decorators/roles.decorators';
 import { RolesGuard } from './../auth/guards/roles.guard';
 import { CurrentUser } from './../common/decorators/current-user.decorator';
@@ -21,7 +21,7 @@ export class FeedbackController {
   constructor(private readonly feedbackService: FeedbackService) {}
 
   @Post()
-  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('customer')
   async create(
     @Body() createFeedbackDto: CreateFeedbackDto,
@@ -36,20 +36,20 @@ export class FeedbackController {
   }
 
   @Get('customer')
-  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('customer')
   async getUserFeedback(@CurrentUser() user: RequestUser): Promise<Feedback[]> {
     return await this.feedbackService.getUserFeedback(user.user_id);
   }
 
   @Get('customer/:id')
-  @UseGuards(BlacklistedJwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async getCustomerFeedbackById(@Param('id') id: string): Promise<Feedback[]> {
     return await this.feedbackService.getCustomerFeedbackById(id);
   }
 
   @Get('provider')
-  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('service_provider')
   async getMyServiceFeedback(
     @CurrentUser() user: RequestUser,
@@ -75,7 +75,7 @@ export class FeedbackController {
   }
 
   @Delete(':id')
-  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   async delete(
     @Param('id') id: string,
     @CurrentUser() user: RequestUser,

@@ -1,6 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { ScheduleModule } from '@nestjs/schedule';
 import { UserModule } from '../users/user.module';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
@@ -18,11 +19,11 @@ import {
 import { PasswordResetTokensService } from './password-reset-token.service';
 
 import {
-  TokenBlacklist,
-  TokenBlacklistSchema,
-} from './schemas/token-blacklist.schema';
-import { TokenBlacklistService } from './token-blacklist.service';
-import { BlacklistedJwtAuthGuard } from './guards/blacklisted-jwt-auth.guard';
+  RefreshToken,
+  RefreshTokenSchema,
+} from './schemas/refresh-token.schema';
+import { RefreshTokenService } from './refresh-token.service';
+import { TokenCleanupService } from './token-cleanup.service';
 import { OtpService } from './otp.service';
 
 @Module({
@@ -31,8 +32,9 @@ import { OtpService } from './otp.service';
     PassportModule,
     ConfigModule,
     MailModule,
+    ScheduleModule.forRoot(),
     MongooseModule.forFeature([
-      { name: TokenBlacklist.name, schema: TokenBlacklistSchema },
+      { name: RefreshToken.name, schema: RefreshTokenSchema },
       { name: PasswordResetToken.name, schema: PasswordResetTokenSchema },
     ]),
     JwtModule.registerAsync({
@@ -51,11 +53,11 @@ import { OtpService } from './otp.service';
     JwtStrategy,
     RolesGuard,
     PasswordResetTokensService,
-    TokenBlacklistService,
-    BlacklistedJwtAuthGuard,
+    RefreshTokenService,
+    TokenCleanupService,
     OtpService,
   ],
   controllers: [AuthController],
-  exports: [AuthService, TokenBlacklistService, BlacklistedJwtAuthGuard],
+  exports: [AuthService, RefreshTokenService],
 })
 export class AuthModule {}

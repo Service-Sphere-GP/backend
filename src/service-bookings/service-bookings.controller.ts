@@ -11,7 +11,7 @@ import {
   ValidationPipe,
   UsePipes,
 } from '@nestjs/common';
-import { BlacklistedJwtAuthGuard } from '../auth/guards/blacklisted-jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorators';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -27,7 +27,7 @@ export class BookingsController {
   ) {}
 
   @Post(':serviceId')
-  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('customer')
   @UsePipes(new ValidationPipe({ transform: true }))
   async createBooking(
@@ -50,7 +50,7 @@ export class BookingsController {
   }
 
   @Get()
-  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'customer')
   async getCustomerBookings(@CurrentUser() customer: any) {
     try {
@@ -61,7 +61,7 @@ export class BookingsController {
   }
 
   @Get('provider')
-  @UseGuards(BlacklistedJwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('service_provider')
   async getProviderBookings(@CurrentUser() provider: any) {
     try {
@@ -72,7 +72,7 @@ export class BookingsController {
   }
 
   @Patch(':id/status')
-  @UseGuards(BlacklistedJwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe({ transform: true }))
   async updateBookingStatus(
     @Param('id') id: string,
@@ -92,7 +92,7 @@ export class BookingsController {
   }
 
   @Get(':id')
-  @UseGuards(BlacklistedJwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async getBookingById(@Param('id') id: string) {
     try {
       return await this.bookingService.getBookingById(id);

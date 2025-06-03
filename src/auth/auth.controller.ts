@@ -13,12 +13,13 @@ import { AuthService } from './auth.service';
 import { CreateCustomerDto } from './../users/dto/create-customer.dto';
 import { CreateServiceProviderDto } from './../users/dto/create-service-provider.dto';
 import { LoginDto } from './dto/login.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 
-import { BlacklistedJwtAuthGuard } from './guards/blacklisted-jwt-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './../common/decorators/current-user.decorator';
 import { OtpService } from './otp.service';
 import { CreateAdminDto } from '../users/dto/create-admin.dto';
@@ -47,14 +48,18 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
+  @Post('refresh')
+  async refreshTokens(@Body() refreshTokenDto: RefreshTokenDto) {
+    return this.authService.refreshTokens(refreshTokenDto.refreshToken);
+  }
+
   @Post('logout')
-  @UseGuards(BlacklistedJwtAuthGuard)
-  async logout(@Headers('authorization') authorization: string) {
-    if (!authorization || !authorization.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Invalid authorization header');
+  async logout(@Body() body?: { refreshToken?: string }) {
+    if (body?.refreshToken) {
+      return this.authService.logout(body.refreshToken);
     }
-    const token = authorization.split(' ')[1];
-    return this.authService.logout(token);
+    // If no refresh token provided, just return success message
+    return { message: 'Logged out successfully' };
   }
 
   @Post('forgot-password')
