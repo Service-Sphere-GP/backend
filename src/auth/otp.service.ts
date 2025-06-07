@@ -6,7 +6,7 @@ import { User } from '../users/schemas/user.schema';
 @Injectable()
 export class OtpService {
   private readonly MAX_OTP_ATTEMPTS = 5;
-  private readonly OTP_COOLDOWN_MINUTES = 2;
+  private readonly OTP_COOLDOWN_MINUTES = 1;
 
   constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
