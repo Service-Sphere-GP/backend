@@ -214,12 +214,20 @@ export class ServicesService {
         return 0;
       }
 
-      const totalRating = services.reduce(
-        (sum, service) => sum + (service.rating_average || 0),
+      const servicesWithFeedback = services.filter(
+        (service) => service.rating_average && service.rating_average > 0,
+      );
+
+      if (servicesWithFeedback.length === 0) {
+        return 0;
+      }
+
+      const totalRating = servicesWithFeedback.reduce(
+        (sum, service) => sum + service.rating_average,
         0,
       );
 
-      const averageRating = totalRating / services.length;
+      const averageRating = totalRating / servicesWithFeedback.length;
       return Math.round(averageRating * 10) / 10;
     } catch (error) {
       console.error(
