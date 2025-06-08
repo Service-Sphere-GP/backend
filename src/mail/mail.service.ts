@@ -104,6 +104,10 @@ export class MailService {
   ): Promise<void> {
     try {
       this.logger.log(`Sending password reset email to ${email}`);
+
+      // For Expo Router deep linking - the correct format
+      const appScheme = process.env.APP_SCHEME || 'myapp';
+
       await this.mailerService.sendMail({
         to: email,
         subject: 'Password Reset Request',
@@ -112,7 +116,7 @@ export class MailService {
           ...this.commonContext(),
           name,
           token,
-          url: `${process.env.URL || 'http://localhost'}:${process.env.PORT || '3000'}/api/v1/auth/reset-password/${token}`,
+          url: `${appScheme}:///(otp)/reset-password/${token}`,
         },
       });
       this.logger.log(`Password reset email sent successfully to ${email}`);
