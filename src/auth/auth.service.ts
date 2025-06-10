@@ -227,7 +227,8 @@ export class AuthService {
     }
 
     // Check if user's email is verified before allowing login
-    if (!user._doc.email_verified) {
+    // Admins are exempt from email verification requirement
+    if (!user._doc.email_verified && user._doc.role !== 'admin') {
       throw new ForbiddenException({
         message:
           'Email verification required. Please verify your email before logging in.',
@@ -258,7 +259,8 @@ export class AuthService {
     }
 
     // Check if user's email is verified before refreshing tokens
-    if (!user.email_verified) {
+    // Admins are exempt from email verification requirement
+    if (!user.email_verified && user.role !== 'admin') {
       // Revoke the refresh token since user is not verified
       await this.refreshTokenService.revokeToken(refreshToken);
       throw new ForbiddenException({

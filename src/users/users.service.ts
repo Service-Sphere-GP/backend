@@ -205,6 +205,7 @@ export class UsersService {
         full_name: `${createAdminDto.first_name} ${createAdminDto.last_name}`,
         role: 'admin',
         permissions: createAdminDto.permissions,
+        email_verified: true,
       };
 
       console.log('Attempting to save admin user to database');
