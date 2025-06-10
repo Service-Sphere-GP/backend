@@ -12,6 +12,7 @@ import { Feedback } from './schemas/feedback.schema';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
 import { ServicesService } from '../services/services.service';
 import { ServiceBookings } from '../service-bookings/schemas/service-booking.schema';
+import { SentimentAnalysisService } from './sentiment-analysis.service';
 
 @Injectable()
 export class FeedbackService {
@@ -21,6 +22,7 @@ export class FeedbackService {
     private servicesService: ServicesService,
     @InjectModel(ServiceBookings.name)
     private bookingModel: Model<ServiceBookings>,
+    private sentimentAnalysisService: SentimentAnalysisService,
   ) {}
 
   async create(
@@ -74,9 +76,16 @@ export class FeedbackService {
       );
     }
 
+    const sentimentResult =
+      await this.sentimentAnalysisService.analyzeSentiment(
+        createFeedbackDto.message,
+      );
+
     const feedbackData = {
       ...createFeedbackDto,
       user: userId,
+      sentiment: sentimentResult.sentiment,
+      sentimentScore: sentimentResult.score,
     };
 
     const newFeedback = await this.feedbackModel.create(feedbackData);

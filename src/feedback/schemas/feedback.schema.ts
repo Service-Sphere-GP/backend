@@ -17,6 +17,16 @@ export class Feedback extends Document {
 
   @Prop({ type: Types.ObjectId, ref: 'ServiceBookings', required: true })
   booking: Types.ObjectId;
+
+  @Prop({
+    type: String,
+    enum: ['positive', 'negative', 'neutral'],
+    default: null,
+  })
+  sentiment: string;
+
+  @Prop({ type: Number, min: 0, max: 1, default: null })
+  sentimentScore: number;
 }
 
 export const FeedbackSchema = SchemaFactory.createForClass(Feedback);
