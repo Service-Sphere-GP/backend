@@ -11,25 +11,25 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
-        const port = configService.get<number>('MAIL_PORT') || 587;
-        const secure = port === 465; // true for 465, false for other ports
+        const mailConfig = configService.get('mail');
+        const port = mailConfig.port;
+        const secure = port === 465; 
 
         return {
           transport: {
-            host: configService.get('MAIL_HOST'),
+            host: mailConfig.host,
             port: port,
             secure: secure,
             auth: {
-              user: configService.get('MAIL_USER'),
-              pass: configService.get('MAIL_PASSWORD'),
+              user: mailConfig.user,
+              pass: mailConfig.password,
             },
-            // Required for Gmail
             tls: {
               rejectUnauthorized: false,
             },
           },
           defaults: {
-            from: `"${configService.get('MAIL_FROM_NAME')}" <${configService.get('MAIL_FROM_ADDRESS')}>`,
+            from: `"${mailConfig.fromName}" <${mailConfig.fromAddress}>`,
           },
           template: {
             dir: join(__dirname, 'templates'),

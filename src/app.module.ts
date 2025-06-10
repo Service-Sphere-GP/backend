@@ -5,6 +5,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import databaseConfig from './config/database.config';
 import appConfig from './config/app.config';
+import mailConfig from './config/mail.config';
+import { configValidationSchema } from './config/validation.schema';
 import { UserModule } from './users/user.module';
 import { ServicesModule } from './services/services.module';
 import { CloudinaryModule } from 'nestjs-cloudinary';
@@ -30,7 +32,12 @@ import { NotificationsModule } from './notifications/notifications.module';
       isGlobal: true,
       expandVariables: true,
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}.local`,
-      load: [databaseConfig, appConfig],
+      load: [databaseConfig, appConfig, mailConfig],
+      validationSchema: configValidationSchema,
+      validationOptions: {
+        allowUnknown: true,
+        abortEarly: false,
+      },
     }),
     MongooseModule.forRootAsync({
       inject: [ConfigService],

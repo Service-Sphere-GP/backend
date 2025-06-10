@@ -9,8 +9,10 @@ import { JsendResponseInterceptor } from './common/interceptors/jsend-response.i
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
+
   app.enableCors({
-    origin: '*',
+    origin: configService.get<string>('app.corsOrigin'),
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
   });
 
@@ -20,7 +22,6 @@ async function bootstrap() {
 
   app.use(morgan('dev'));
 
-  const configService = app.get(ConfigService);
   app.useGlobalFilters(new JsendExceptionFilter(configService));
   app.useGlobalInterceptors(new JsendResponseInterceptor());
 
@@ -36,8 +37,8 @@ async function bootstrap() {
     }),
   );
 
-  // Use the PORT environment variable provided by Heroku
-  const port = process.env.PORT || 3000;
+  // Use ConfigService instead of direct env access
+  const port = configService.get<number>('app.port');
   await app.listen(port);
 }
 bootstrap();
