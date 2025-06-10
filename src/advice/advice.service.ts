@@ -34,15 +34,31 @@ export class AdviceService {
         feedback.push(...serviceFeedback);
       }
 
-      const feedbackText = feedback
-        .map((f) => `Rating: ${f.rating}, Message: ${f.message}`)
-        .join('\n');
+      if (!feedback || feedback.length === 0) {
+        return 'Not enough feedback data to provide advice.';
+      }
+
+  
+      const dominantLanguage = this.detectDominantLanguage(feedback);
+
+    
+      const feedbackText = this.formatFeedbackForAdvice(
+        feedback,
+        dominantLanguage,
+      );
 
       if (!feedbackText.trim()) {
         return 'Not enough feedback data to provide advice.';
       }
 
-      const response = await this.callHuggingFaceModel(feedbackText);
+      this.logger.log(
+        `Formatted feedback for advice (${dominantLanguage}): ${feedbackText.substring(0, 100)}...`,
+      );
+
+      const response = await this.callHuggingFaceModel(
+        feedbackText,
+        dominantLanguage,
+      );
       return response;
     } catch (error) {
       this.logger.error(`Error getting advice: ${error.message}`, error.stack);
@@ -50,13 +66,113 @@ export class AdviceService {
     }
   }
 
-  private async callHuggingFaceModel(text: string): Promise<any> {
+  private detectDominantLanguage(feedback: any[]): 'en' | 'ar' {
+    let arabicCount = 0;
+    let totalMessages = 0;
+
+    for (const f of feedback) {
+      if (f.message && f.message.trim()) {
+        totalMessages++;
+        
+        const arabicPattern =
+          /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+        if (arabicPattern.test(f.message)) {
+          arabicCount++;
+        }
+      }
+    }
+
+    const arabicPercentage =
+      totalMessages > 0 ? (arabicCount / totalMessages) * 100 : 0;
+    const dominantLanguage = arabicPercentage > 50 ? 'ar' : 'en';
+
+    this.logger.log(
+      `Language detection: ${arabicCount}/${totalMessages} Arabic messages (${arabicPercentage.toFixed(1)}%) -> ${dominantLanguage}`,
+    );
+
+    return dominantLanguage;
+  }
+
+  private formatFeedbackForAdvice(
+    feedback: any[],
+    language: 'en' | 'ar',
+  ): string {
+    
+    const ratingGroups = {
+      positive: feedback.filter((f) => f.rating >= 4),
+      neutral: feedback.filter((f) => f.rating === 3),
+      negative: feedback.filter((f) => f.rating <= 2),
+    };
+
+    const totalFeedback = feedback.length;
+    const avgRating =
+      feedback.reduce((sum, f) => sum + f.rating, 0) / totalFeedback;
+
+    let formattedText = '';
+
+    if (language === 'ar') {
+      formattedText = `تحليل تقييمات الخدمة:\n`;
+      formattedText += `عدد التقييمات الإجمالي: ${totalFeedback}\n`;
+      formattedText += `متوسط التقييم: ${avgRating.toFixed(1)}/5\n\n`;
+
+      if (ratingGroups.positive.length > 0) {
+        formattedText += `التقييمات الإيجابية (${ratingGroups.positive.length}):\n`;
+        ratingGroups.positive.slice(0, 3).forEach((f) => {
+          formattedText += `- ${f.rating}/5: ${f.message}\n`;
+        });
+        formattedText += '\n';
+      }
+
+      if (ratingGroups.negative.length > 0) {
+        formattedText += `التقييمات السلبية (${ratingGroups.negative.length}):\n`;
+        ratingGroups.negative.slice(0, 3).forEach((f) => {
+          formattedText += `- ${f.rating}/5: ${f.message}\n`;
+        });
+        formattedText += '\n';
+      }
+
+      formattedText +=
+        'يرجى تقديم نصائح محددة وقابلة للتطبيق لتحسين الخدمة بناءً على هذه التقييمات.';
+    } else {
+      formattedText = `Service Feedback Analysis:\n`;
+      formattedText += `Total Reviews: ${totalFeedback}\n`;
+      formattedText += `Average Rating: ${avgRating.toFixed(1)}/5\n\n`;
+
+      if (ratingGroups.positive.length > 0) {
+        formattedText += `Positive Reviews (${ratingGroups.positive.length}):\n`;
+        ratingGroups.positive.slice(0, 3).forEach((f) => {
+          formattedText += `- ${f.rating}/5: ${f.message}\n`;
+        });
+        formattedText += '\n';
+      }
+
+      if (ratingGroups.negative.length > 0) {
+        formattedText += `Negative Reviews (${ratingGroups.negative.length}):\n`;
+        ratingGroups.negative.slice(0, 3).forEach((f) => {
+          formattedText += `- ${f.rating}/5: ${f.message}\n`;
+        });
+        formattedText += '\n';
+      }
+
+      formattedText +=
+        'Please provide specific and actionable advice to improve the service based on these reviews.';
+    }
+
+    return formattedText;
+  }
+
+  private async callHuggingFaceModel(
+    text: string,
+    language: 'en' | 'ar' = 'en',
+  ): Promise<any> {
     try {
-      this.logger.log('Calling Hugging Face model with feedback text');
+      this.logger.log(
+        `Calling Hugging Face model with feedback text (${language})`,
+      );
       const initResponse = await axios.post(
         'https://gehadnasser-advice-model.hf.space/gradio_api/call/predict',
         {
-          data: [text, 'en'],
+          data: [text, language],
         },
         {
           headers: {

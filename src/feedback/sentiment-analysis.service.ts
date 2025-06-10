@@ -16,14 +16,16 @@ export class SentimentAnalysisService {
     text: string,
     language?: string,
   ): Promise<SentimentAnalysisResult> {
+    const detectedLanguage = language || this.detectLanguage(text);
+
     this.logger.log(
-      `Calling sentiment model with text: ${text.substring(0, 50)}...`,
+      `Calling sentiment model with text: ${text.substring(0, 50)}... (Language: ${detectedLanguage})`,
     );
     try {
       const initResponse = await axios.post(
         `${this.baseUrl}/gradio_api/call/classify_sentiment`,
         {
-          data: [text, language || 'English'],
+          data: [text, detectedLanguage],
         },
         {
           headers: {
@@ -77,16 +79,45 @@ export class SentimentAnalysisService {
     return { sentiment: 'neutral', score: 0.5 };
   }
 
+  private detectLanguage(text: string): 'Arabic' | 'English' {
+    const arabicPattern =
+      /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+
+    const arabicMatches = text.match(new RegExp(arabicPattern, 'g'));
+    const arabicCharCount = arabicMatches ? arabicMatches.length : 0;
+
+    const totalChars = text.replace(/\s+/g, '').length; 
+    const arabicPercentage =
+      totalChars > 0 ? (arabicCharCount / totalChars) * 100 : 0;
+
+    const detectedLanguage = arabicPercentage > 30 ? 'Arabic' : 'English';
+
+    this.logger.log(
+      `Language detection: ${arabicCharCount}/${totalChars} Arabic chars (${arabicPercentage.toFixed(1)}%) -> ${detectedLanguage}`,
+    );
+
+    return detectedLanguage;
+  }
+
   private parseModelResponse(data: any[]): SentimentAnalysisResult {
     if (data.length > 0 && typeof data[0] === 'string') {
       const responseText = data[0].trim();
 
       this.logger.log(`Raw response from model: ${responseText}`);
 
-      const sentimentMatch = responseText.match(
+
+      let sentimentMatch = responseText.match(
         /Sentiment:\s*(positive|negative|neutral)/i,
       );
-      const scoreMatch = responseText.match(/Confidence:\s*(\d+\.?\d*)/i);
+      let scoreMatch = responseText.match(/Confidence:\s*(\d+\.?\d*)/i);
+
+      if (!sentimentMatch) {
+        sentimentMatch = responseText.match(/^(positive|negative|neutral)/i);
+      }
+
+      if (!scoreMatch) {
+        scoreMatch = responseText.match(/\((\d+\.?\d*)\)/);
+      }
 
       let sentiment: 'positive' | 'negative' | 'neutral' = 'neutral';
       let score = 0.5;
