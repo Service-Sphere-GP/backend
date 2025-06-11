@@ -38,10 +38,8 @@ export class AdviceService {
         return 'Not enough feedback data to provide advice.';
       }
 
-  
       const dominantLanguage = this.detectDominantLanguage(feedback);
 
-    
       const feedbackText = this.formatFeedbackForAdvice(
         feedback,
         dominantLanguage,
@@ -73,7 +71,7 @@ export class AdviceService {
     for (const f of feedback) {
       if (f.message && f.message.trim()) {
         totalMessages++;
-        
+
         const arabicPattern =
           /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
         if (arabicPattern.test(f.message)) {
@@ -97,7 +95,6 @@ export class AdviceService {
     feedback: any[],
     language: 'en' | 'ar',
   ): string {
-    
     const ratingGroups = {
       positive: feedback.filter((f) => f.rating >= 4),
       neutral: feedback.filter((f) => f.rating === 3),
@@ -111,51 +108,65 @@ export class AdviceService {
     let formattedText = '';
 
     if (language === 'ar') {
-      formattedText = `تحليل تقييمات الخدمة:\n`;
-      formattedText += `عدد التقييمات الإجمالي: ${totalFeedback}\n`;
-      formattedText += `متوسط التقييم: ${avgRating.toFixed(1)}/5\n\n`;
+      formattedText = `# تحليل تقييمات الخدمة\n\n`;
+      formattedText += `## الإحصائيات العامة\n`;
+      formattedText += `- **عدد التقييمات الإجمالي:** ${totalFeedback}\n`;
+      formattedText += `- **متوسط التقييم:** ${avgRating.toFixed(1)}/5 ⭐\n\n`;
 
       if (ratingGroups.positive.length > 0) {
-        formattedText += `التقييمات الإيجابية (${ratingGroups.positive.length}):\n`;
-        ratingGroups.positive.slice(0, 3).forEach((f) => {
-          formattedText += `- ${f.rating}/5: ${f.message}\n`;
+        formattedText += `## التقييمات الإيجابية (${ratingGroups.positive.length})\n\n`;
+        ratingGroups.positive.slice(0, 3).forEach((f, index) => {
+          formattedText += `- ${f.rating}/5: ${f.message}\n\n`;
         });
-        formattedText += '\n';
+      }
+
+      if (ratingGroups.neutral.length > 0) {
+        formattedText += `## التقييمات المحايدة (${ratingGroups.neutral.length})\n\n`;
+        ratingGroups.neutral.slice(0, 2).forEach((f, index) => {
+          formattedText += `- ${f.rating}/5: ${f.message}\n\n`;
+        });
       }
 
       if (ratingGroups.negative.length > 0) {
-        formattedText += `التقييمات السلبية (${ratingGroups.negative.length}):\n`;
-        ratingGroups.negative.slice(0, 3).forEach((f) => {
-          formattedText += `- ${f.rating}/5: ${f.message}\n`;
+        formattedText += `## التقييمات السلبية (${ratingGroups.negative.length})\n\n`;
+        ratingGroups.negative.slice(0, 3).forEach((f, index) => {
+          formattedText += `- ${f.rating}/5: ${f.message}\n\n`;
         });
-        formattedText += '\n';
       }
 
-      formattedText +=
-        'يرجى تقديم نصائح محددة وقابلة للتطبيق لتحسين الخدمة بناءً على هذه التقييمات.';
+      formattedText += `---\n\n`;
+      formattedText += `## طلب النصيحة\n`;
+      formattedText += `يرجى تقديم نصائح محددة وقابلة للتطبيق لتحسين الخدمة بناءً على هذه التقييمات. قم بتنسيق الإجابة بتنسيق Markdown مع العناوين والقوائم والتأكيدات المناسبة.`;
     } else {
-      formattedText = `Service Feedback Analysis:\n`;
-      formattedText += `Total Reviews: ${totalFeedback}\n`;
-      formattedText += `Average Rating: ${avgRating.toFixed(1)}/5\n\n`;
+      formattedText = `# Service Feedback Analysis\n\n`;
+      formattedText += `## Overview Statistics\n`;
+      formattedText += `- **Total Reviews:** ${totalFeedback}\n`;
+      formattedText += `- **Average Rating:** ${avgRating.toFixed(1)}/5 ⭐\n\n`;
 
       if (ratingGroups.positive.length > 0) {
-        formattedText += `Positive Reviews (${ratingGroups.positive.length}):\n`;
-        ratingGroups.positive.slice(0, 3).forEach((f) => {
-          formattedText += `- ${f.rating}/5: ${f.message}\n`;
+        formattedText += `## Positive Reviews (${ratingGroups.positive.length})\n\n`;
+        ratingGroups.positive.slice(0, 3).forEach((f, index) => {
+          formattedText += `${f.rating}/5: ${f.message}\n\n`;
         });
-        formattedText += '\n';
+      }
+
+      if (ratingGroups.neutral.length > 0) {
+        formattedText += `## Neutral Reviews (${ratingGroups.neutral.length})\n\n`;
+        ratingGroups.neutral.slice(0, 2).forEach((f, index) => {
+          formattedText += `${f.rating}/5: ${f.message}\n\n`;
+        });
       }
 
       if (ratingGroups.negative.length > 0) {
-        formattedText += `Negative Reviews (${ratingGroups.negative.length}):\n`;
-        ratingGroups.negative.slice(0, 3).forEach((f) => {
-          formattedText += `- ${f.rating}/5: ${f.message}\n`;
+        formattedText += `## Negative Reviews (${ratingGroups.negative.length})\n\n`;
+        ratingGroups.negative.slice(0, 3).forEach((f, index) => {
+          formattedText += `- ${f.rating}/5: ${f.message}\n\n`;
         });
-        formattedText += '\n';
       }
 
-      formattedText +=
-        'Please provide specific and actionable advice to improve the service based on these reviews.';
+      formattedText += `---\n\n`;
+      formattedText += `## Advice Request\n`;
+      formattedText += `Please provide specific and actionable advice to improve the service based on these reviews. Format your response in Markdown with appropriate headings, lists, and emphasis.`;
     }
 
     return formattedText;
