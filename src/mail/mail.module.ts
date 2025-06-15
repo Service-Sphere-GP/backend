@@ -38,7 +38,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
               strict: true,
             },
           },
-          preview: configService.get('NODE_ENV') === 'development',
+          // preview: configService.get('NODE_ENV') === 'development',
         };
       },
     }),
