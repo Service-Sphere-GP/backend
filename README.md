@@ -17,7 +17,6 @@ Service Sphere is a sophisticated service marketplace backend built with **NestJ
 - **Real-time Communication**: WebSocket implementation for instant messaging
 - **Security-First**: JWT authentication with refresh tokens and role-based access control
 - **Scalable Design**: Microservices-ready architecture with Docker containerization
-- **Test Coverage**: Comprehensive testing with Jest (coverage reports available)
 
 ## ✨ Core Features
 
@@ -63,7 +62,6 @@ Service Sphere is a sophisticated service marketplace backend built with **NestJ
 - **Transactional email system** with Nodemailer
 - **Custom email templates** with Handlebars
 - **Welcome emails, verification, and password reset**
-- **Booking confirmation and status updates**
 
 ### 🏗️ Technical Architecture
 - **Clean Architecture** with dependency injection
@@ -137,14 +135,14 @@ docker-compose up -d
 4. **Local Development**
 ```bash
 # Install dependencies
-npm install
+yarn install
 
 # Start development server
-npm run start:dev
+yarn run start:dev
 
 # Run tests
-npm run test
-npm run test:cov
+yarn run test
+yarn run test:cov
 ```
 
 ### 🌐 API Access
@@ -168,25 +166,6 @@ src/
 ├── config/            # Application configuration
 ├── common/            # Shared utilities and decorators
 └── main.ts           # Application entry point
-```
-
-## 🧪 Testing & Quality
-
-```bash
-# Run unit tests
-npm run test
-
-# Run tests with coverage
-npm run test:cov
-
-# Run e2e tests
-npm run test:e2e
-
-# Lint code
-npm run lint
-
-# Format code
-npm run format
 ```
 
 ## 🚢 Deployment
@@ -311,8 +290,6 @@ This project is developed as part of a graduation project and is available for e
 **Framework**: NestJS with TypeScript  
 **Database**: MongoDB  
 **Architecture**: Microservices-ready monolith  
-**Development Period**: [Your timeline]  
-**Team Size**: [Team size if applicable]
 
 ### Skills Demonstrated
 - Advanced TypeScript and NestJS development
