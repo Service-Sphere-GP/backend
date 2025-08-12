@@ -1,10 +1,29 @@
 {
-  "name": "backend",
-  "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "name": "service-sphere-backend",
+  "version": "1.0.0",
+  "description": "Professional service marketplace platform backend - A comprehensive NestJS application for connecting customers with service providers through real-time communication and intelligent booking management",
+  "author": "Hussein Hany <your-email@example.com>",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
+  "keywords": [
+    "nestjs",
+    "typescript",
+    "service-marketplace",
+    "booking-system",
+    "real-time-chat",
+    "jwt-authentication",
+    "mongodb",
+    "websocket",
+    "graduation-project"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Service-Sphere-GP/backend.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Service-Sphere-GP/backend/issues"
+  },
+  "homepage": "https://github.com/Service-Sphere-GP/backend#readme",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
